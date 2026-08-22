@@ -438,7 +438,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 ### Phase 1 — Domain core (pure, testable, no UI)
 - [x] **T-004** Config schema (zod) + loader
 - [x] **T-005** Domain types
-- [ ] **T-006** Scoring engine + unit tests
+- [x] **T-006** Scoring engine + unit tests
 - [ ] **T-007** Recommendation engine + unit tests
 
 ### Phase 2 — App shell
@@ -1015,7 +1015,7 @@ npm run typecheck && npm run lint
 
 ### T-006 — Scoring engine + unit tests
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-005
 
 **Do:**
@@ -1066,6 +1066,9 @@ npm run test:run -- tests/scoring.test.ts && npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- Added `missingFactorIds()` next to `isComplete()` — the review step (T-016) has to name which factors are unanswered, and deriving that in the component would put scoring logic back in the UI.
+- `format.ts` also carries `formatWeight`, `formatDateTime` and `formatDuration`, used later by the model page, admin and PDF.
+- The range assertion allows 1e-9 of slack: weights like 0.383 do not sum to exactly 1 in binary floating point.
 
 ---
 
