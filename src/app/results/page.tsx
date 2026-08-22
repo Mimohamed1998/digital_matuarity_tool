@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ConfigError } from '@/components/ConfigError';
 import { ResultsView } from '@/components/results/ResultsView';
 import { loadConfig } from '@/lib/config/load';
 
@@ -8,6 +9,13 @@ export const metadata: Metadata = {
 };
 
 export default function ResultsPage() {
-  const config = loadConfig();
+  let config;
+  try {
+    config = loadConfig();
+  } catch (error) {
+    console.error(`[results] config failed to load: ${error instanceof Error ? error.message : String(error)}`);
+    return <ConfigError />;
+  }
+
   return <ResultsView config={config} />;
 }

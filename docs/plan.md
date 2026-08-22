@@ -479,7 +479,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 
 ### Phase 7 — Hardening & ship
 - [x] **T-025** Accessibility and responsive pass (NFR-1, NFR-2)
-- [ ] **T-026** Error, empty and loading states + `not-found`
+- [x] **T-026** Error, empty and loading states + `not-found`
 - [ ] **T-027** README + Vercel deployment configuration (FR-13)
 - [ ] **T-028** *(optional)* Playwright happy-path smoke test
 
@@ -2244,7 +2244,7 @@ npm run build && npm run lint
 
 ### T-026 — Error, empty and loading states
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-025
 
 **Do:**
@@ -2269,6 +2269,11 @@ npm run build && npm run lint
 ```
 
 **Notes:**
+- The refresh-flash fix is in two places, deliberately: `loading.tsx` covers the route-segment load, and the `!hydrated` branch inside ResultsView covers the gap between hydration and sessionStorage being read. Either alone leaves a window where the empty state paints over answers that are about to arrive, which reads as data loss.
+- `error.tsx` shows no stack trace and not even the error message — in this app a message could name a config path or a storage detail. Only the digest (a server-side correlation id) is displayed.
+- Added `src/components/ConfigError.tsx` and wrapped `loadConfig()` on /survey and /results: the build already fails on a bad config, so this only covers conf.yaml changing after deploy. The zod detail goes to the server log, not the page.
+- Added `src/components/survey/StartOverButton.tsx` for the reset confirmation — inline rather than `window.confirm`, so it is styled, keyboard-navigable and focuses Cancel by default. It is on the results page, where the consequence (results are unrecoverable once cleared, FR-10) is real.
+- Also added `src/app/survey/loading.tsx` alongside the results one, for the same reason.
 
 ---
 

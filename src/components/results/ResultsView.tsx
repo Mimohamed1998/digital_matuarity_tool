@@ -8,6 +8,7 @@ import { RecommendationList } from '@/components/results/RecommendationList';
 import { ScoreHeadline } from '@/components/results/ScoreHeadline';
 import { StrengthList } from '@/components/results/StrengthList';
 import { DownloadPdfButton } from '@/components/pdf/DownloadPdfButton';
+import { StartOverButton } from '@/components/survey/StartOverButton';
 import type { AppConfig } from '@/lib/config/schema';
 import { buildRecommendations, computeScore, isComplete } from '@/lib/scoring';
 import { useSurveyHydrated, useSurveyStore } from '@/store/survey-store';
@@ -150,6 +151,10 @@ export function ResultsView({ config }: ResultsViewProps) {
                 typeof respondent.designation === 'string' ? respondent.designation : undefined
               }
             />
+
+            <div className="mt-6">
+              <StartOverButton warning="This will clear these results and all of your answers. They cannot be recovered afterwards — download the PDF first if you want to keep them." />
+            </div>
           </section>
         </>
       )}
