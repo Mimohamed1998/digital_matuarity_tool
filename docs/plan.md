@@ -480,7 +480,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 ### Phase 7 — Hardening & ship
 - [x] **T-025** Accessibility and responsive pass (NFR-1, NFR-2)
 - [x] **T-026** Error, empty and loading states + `not-found`
-- [ ] **T-027** README + Vercel deployment configuration (FR-13)
+- [x] **T-027** README + Vercel deployment configuration (FR-13)
 - [ ] **T-028** *(optional)* Playwright happy-path smoke test
 
 ---
@@ -2279,7 +2279,7 @@ npm run build && npm run lint
 
 ### T-027 — README + Vercel deployment (FR-13)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-026
 
 **Do:** Write `README.md` covering:
@@ -2329,6 +2329,12 @@ npm run build && npm run test:run
 ```
 
 **Notes:**
+- The README's worked example was checked against the engine rather than transcribed: tier1 4.073, tier2 3.170, overall 3.8021, Level 4 Established — all match. Every `npm run` command it mentions exists in package.json.
+- `.gitignore` had `.env*`, which would have silently ignored `.env.example` too. Added `!.env.example`, and confirmed `.env.local` is still ignored.
+- The "editing the survey" and "getting your data out" sections are written for a non-developer: how to change a question, how weights must total 1.0 in both places, that `npm run build` fails loudly on a bad config, and the exact click path from /admin to a CSV that drops into SPSS.
+- Flagged for the owner: OD-2 (band thresholds are an assumption) and OD-9 (retention and PII must match the ethics approval), plus OD-3 since the recommendation wording was drafted rather than sourced.
+- Documented that `SUBMISSION_STORE=fs` is test-only and must not be set on a deployment.
+- NOT verified: the actual Vercel deploy and the live /admin check. That needs the owner's Vercel and Neon accounts.
 
 ---
 
