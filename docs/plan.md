@@ -431,7 +431,7 @@ config-driven, so reversing one is cheap. **Flag them to the project owner.**
 Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say why in Notes)
 
 ### Phase 0 — Foundation
-- [ ] **T-001** Scaffold the Next.js + TypeScript + Tailwind project
+- [x] **T-001** Scaffold the Next.js + TypeScript + Tailwind project
 - [ ] **T-002** Install dependencies and wire up tooling (Vitest, lint, scripts)
 - [ ] **T-003** Author `conf.yaml` — the complete survey configuration
 
@@ -489,7 +489,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 
 ### T-001 — Scaffold the Next.js + TypeScript + Tailwind project
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** —
 
 **Do:**
@@ -533,6 +533,7 @@ npm run build && npx tsc --noEmit && npm run lint
 ```
 
 **Notes:**
+- Scaffolded into a temp dir and copied in, since the repo root was non-empty. create-next-app installed Next 16.3.2 / React 19.2.8; Next 16 builds with Turbopack regardless of --no-turbopack (that flag only affects `next dev`).
 
 ---
 
