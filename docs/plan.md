@@ -445,7 +445,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-008** Root layout, design tokens, global styles (light + dark)
 - [x] **T-009** Base UI primitives (`Button`, `Card`, `Field`, `ProgressBar`, `RadioStatement`)
 - [x] **T-010** Landing page (FR-1)
-- [ ] **T-011** Model / theory page (FR-2)
+- [x] **T-011** Model / theory page (FR-2)
 
 ### Phase 3 — Survey flow
 - [ ] **T-012** Survey store (zustand + sessionStorage)
@@ -1242,7 +1242,7 @@ npm run build && npm run lint
 
 ### T-011 — Model / theory page (FR-2)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-009, T-004
 
 **Do:** `src/app/model/page.tsx` — static server component explaining the theory.
@@ -1274,6 +1274,9 @@ npm run build && npm run lint
 ```
 
 **Notes:**
+- Both figures carry long alt text that states everything the image conveys, and every fact in them is repeated as text (tier cards, level articles) so the image is never the only carrier.
+- The weights table, the formula block and the worked example are all computed from conf.yaml — no weight is typed by hand. Verified against a production build: effective weights render as 0.2681, 0.2569, 0.1330, 0.0420, 0.1200, 0.0690, 0.1110, both totals 1.00.
+- Maturity levels render top-down (5→1) to match the pyramid figure, with each band's upper bound derived from the next band's min_score.
 
 ---
 
