@@ -457,7 +457,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 ### Phase 4 — Results
 - [x] **T-017** Results page shell + score headline + level band (FR-6, FR-12)
 - [x] **T-018** Tier breakdown + factor radar charts
-- [ ] **T-019** Recommendations and strengths lists (FR-7)
+- [x] **T-019** Recommendations and strengths lists (FR-7)
 
 ### Phase 5 — Persistence
 - [ ] **T-020** Storage adapters (Postgres + filesystem) behind one interface
@@ -1539,7 +1539,7 @@ npm run build && npm run typecheck && npm run lint
 
 ### T-019 — Recommendations and strengths (FR-7)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-017, T-007
 
 **Do:** `src/components/results/RecommendationList.tsx` and `StrengthList.tsx`.
@@ -1565,6 +1565,9 @@ npm run test:run && npm run build && npm run lint
 ```
 
 **Notes:**
+- Neither component sorts or filters — they render `improvements` and `strengths` in the order the engine returns them. All text is from conf.yaml.
+- The impact indicator is a bar scaled against the top-ranked item plus a sentence naming the actual points it would add, so the ranking explains itself rather than asking the reader to trust it.
+- The no-improvements case renders a positive statement instead of an empty container; `StrengthList` renders nothing at all when there are no strengths, since a "Strengths: none" heading would be worse than silence.
 
 ---
 

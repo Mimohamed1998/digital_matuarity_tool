@@ -4,9 +4,11 @@ import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { ButtonLink } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { RecommendationList } from '@/components/results/RecommendationList';
 import { ScoreHeadline } from '@/components/results/ScoreHeadline';
+import { StrengthList } from '@/components/results/StrengthList';
 import type { AppConfig } from '@/lib/config/schema';
-import { computeScore, isComplete } from '@/lib/scoring';
+import { buildRecommendations, computeScore, isComplete } from '@/lib/scoring';
 import { useSurveyHydrated, useSurveyStore } from '@/store/survey-store';
 import type { Answers } from '@/types/domain';
 
@@ -54,6 +56,10 @@ export function ResultsView({ config }: ResultsViewProps) {
     () => (complete ? computeScore(config, answers as Answers) : null),
     [complete, config, answers],
   );
+  const recommendations = useMemo(
+    () => (result ? buildRecommendations(config, result) : null),
+    [config, result],
+  );
 
   // Until sessionStorage has been read there is nothing to say. Showing the empty state
   // here would look like the answers had been lost.
@@ -99,6 +105,13 @@ export function ResultsView({ config }: ResultsViewProps) {
       />
 
       <FactorRadar config={config} result={result} />
+
+      {recommendations && (
+        <>
+          <RecommendationList recommendations={recommendations.improvements} config={config} />
+          <StrengthList strengths={recommendations.strengths} config={config} />
+        </>
+      )}
     </div>
   );
 }
