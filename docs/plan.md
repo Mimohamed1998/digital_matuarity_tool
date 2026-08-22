@@ -467,7 +467,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 ### Phase 5b — Admin data access *(added 2026-08-22)*
 - [x] **T-029** Extend the storage layer with read + stream methods
 - [x] **T-030** Admin session auth primitives (password, session token, rate limit)
-- [ ] **T-031** Middleware gate + login/logout routes (FR-14, FR-17)
+- [x] **T-031** Middleware gate + login/logout routes (FR-14, FR-17)
 - [ ] **T-032** Admin dashboard — summary stats + paginated submissions (FR-15)
 - [ ] **T-033** Submission detail view (FR-15)
 - [ ] **T-034** CSV / JSON export (FR-16)
@@ -1832,7 +1832,7 @@ npm run test:run -- tests/auth.test.ts && npm run typecheck && npm run lint
 
 ### T-031 — Middleware gate + login/logout (FR-14, FR-17)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-030
 
 **Do:**
@@ -1890,6 +1890,10 @@ curl -sS -b /tmp/dm.jar -o /dev/null -w '%{http_code}\n' localhost:3000/api/admi
 ```
 
 **Notes:**
+- Verified against a production build, all 14 checks: unauthenticated /api/admin/* returns 401 with only {"error":"unauthorized"}; /admin 307s to /admin/login; wrong password 401; correct password 204 with an HttpOnly cookie; authenticated /admin 200; X-Robots-Tag: noindex, nofollow on matched responses; a cookie with a forged payload is rejected on both surfaces; the sixth rapid wrong password returns 429 with Retry-After: 900; logout 204 and /admin redirects again.
+- All four login failure modes — wrong password, non-JSON body, missing field, wrong field type — return byte-identical 401s, checked side by side from a fresh client IP.
+- Added `src/lib/auth/guard.ts` (`hasAdminSession()`) as the shared second gate, and a placeholder `src/app/admin/page.tsx` that already uses it; T-032 fills in the dashboard.
+- No public page, layout or component links to /admin — grepped.
 
 ---
 
