@@ -1,9 +1,15 @@
 import type { Submission } from '@/types/domain';
 import { createFsStore } from './fs';
 import { createPostgresStore } from './postgres';
-import type { SubmissionStore } from './types';
+import { EMPTY_LEVEL_DISTRIBUTION, type StoreSummary, type SubmissionStore } from './types';
 
-export type { SubmissionStore } from './types';
+export type {
+  ListOptions,
+  ListResult,
+  StoreSummary,
+  SubmissionListItem,
+  SubmissionStore,
+} from './types';
 
 /**
  * Last-resort store used when nothing else is configured.
@@ -12,12 +18,32 @@ export type { SubmissionStore } from './types';
  * respondent their result (OD-5). The id is still returned so the caller's contract holds.
  */
 function createNoopStore(reason: string): SubmissionStore {
+  const emptySummary: StoreSummary = {
+    total: 0,
+    last7Days: 0,
+    last30Days: 0,
+    meanOverallScore: null,
+    levelDistribution: { ...EMPTY_LEVEL_DISTRIBUTION },
+    meanByFactor: {},
+  };
+
   return {
     async save(submission: Submission) {
       // Deliberately logs the id only. The submission body is personal data and never
       // belongs in a log line.
       console.warn(`[storage] not persisting submission ${submission.id}: ${reason}`);
       return { id: submission.id };
+    },
+    async list() {
+      return { items: [], total: 0 };
+    },
+    async get() {
+      return null;
+    },
+    /** An async generator is the interface contract; this one simply yields nothing. */
+    async *all() {},
+    async summary() {
+      return emptySummary;
     },
   };
 }

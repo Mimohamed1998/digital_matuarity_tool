@@ -465,7 +465,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-022** Wire submission into the survey completion flow
 
 ### Phase 5b — Admin data access *(added 2026-08-22)*
-- [ ] **T-029** Extend the storage layer with read + stream methods
+- [x] **T-029** Extend the storage layer with read + stream methods
 - [ ] **T-030** Admin session auth primitives (password, session token, rate limit)
 - [ ] **T-031** Middleware gate + login/logout routes (FR-14, FR-17)
 - [ ] **T-032** Admin dashboard — summary stats + paginated submissions (FR-15)
@@ -1697,7 +1697,7 @@ npm run build && npm run typecheck && npm run lint
 
 ### T-029 — Extend the storage layer with read + stream methods
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-020
 
 **Do:**
@@ -1759,6 +1759,11 @@ npm run test:run -- tests/storage.test.ts && npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- Both adapters were verified. The fs adapter has 12 tests including the seeded 250: all() yields exactly 250 with no duplicates and in newest-first order across batch boundaries, list({limit:20,offset:0}).total is 250, and get('does-not-exist') resolves to null.
+- The Postgres queries were run against a real local Postgres with seeded rows — the keyset page, the keyset continuation on (submitted_at, id) < (…), the filtered-count summary, the level distribution, and the jsonb_each unpivot for per-factor means all return correct results. The neon() HTTP driver cannot target a local server, so the driver wiring is exercised on deploy.
+- `meanByFactor` uses a jsonb_each unpivot rather than one avg() per factor id, so the query never names a factor and stays correct when conf.yaml gains one.
+- `get()` rejects ids containing a slash or '..' in the fs adapter — the id reaches it straight from a URL segment.
+- `SubmissionListItem` carries `experienceDigitalisationYears` (a dashboard column in T-032) and deliberately no name; a test asserts the name never appears in a list row.
 
 ---
 
