@@ -443,7 +443,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 
 ### Phase 2 — App shell
 - [x] **T-008** Root layout, design tokens, global styles (light + dark)
-- [ ] **T-009** Base UI primitives (`Button`, `Card`, `Field`, `ProgressBar`, `RadioStatement`)
+- [x] **T-009** Base UI primitives (`Button`, `Card`, `Field`, `ProgressBar`, `RadioStatement`)
 - [ ] **T-010** Landing page (FR-1)
 - [ ] **T-011** Model / theory page (FR-2)
 
@@ -1169,7 +1169,7 @@ npm run build && npm run lint
 
 ### T-009 — Base UI primitives
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-008
 
 **Do:** Build small, unstyled-by-default, prop-driven components in `src/components/ui/`:
@@ -1200,6 +1200,9 @@ npm run build && npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- `Button` renders a `<button>`; the `href` case is a separate `ButtonLink` export wrapping next/link, because one component cannot forward a ref to both element types cleanly and the union props made every call site need a cast.
+- `Field` takes a render prop rather than wrapping an input, so callers keep control of the control while Field owns the label/aria-describedby/aria-invalid wiring. `inputClassName` is exported alongside it for consistent styling.
+- `RadioStatement` is the only client component of the five. Its native radio stays focusable (opacity-0, not display:none) so arrow keys and Space work natively, and the card shows the focus ring via `has-[:focus-visible]`. Selection is signalled by a tick and a ring, not colour alone.
 
 ---
 
