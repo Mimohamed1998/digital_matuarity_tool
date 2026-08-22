@@ -449,7 +449,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 
 ### Phase 3 — Survey flow
 - [x] **T-012** Survey store (zustand + sessionStorage)
-- [ ] **T-013** Respondent information step (FR-11)
+- [x] **T-013** Respondent information step (FR-11)
 - [ ] **T-014** Question card component
 - [ ] **T-015** Survey page orchestration — one question at a time (FR-4)
 - [ ] **T-016** Review step — read back submitted answers (FR-5)
@@ -1326,7 +1326,7 @@ npm run typecheck && npm run lint && npm run build
 
 ### T-013 — Respondent information step (FR-11)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-012, T-009
 
 **Do:** `src/components/survey/RespondentForm.tsx` — client component rendering fields
@@ -1352,6 +1352,9 @@ npm run build && npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- Fields render from `respondent_fields`; the only per-type branching is text/number/select input rendering, so a new field in conf.yaml needs no code change. Validation reads `required`, `min` and `max` from the same config.
+- Validates on blur and on submit, and additionally clears an error the moment the value becomes valid — leaving a stale message while someone visibly fixes the field is worse than either.
+- The consent checkbox (OD-4) is a separate required control with its own error association; submitting without it moves focus there.
 
 ---
 
