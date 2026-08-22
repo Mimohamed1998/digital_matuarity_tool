@@ -470,7 +470,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-031** Middleware gate + login/logout routes (FR-14, FR-17)
 - [x] **T-032** Admin dashboard — summary stats + paginated submissions (FR-15)
 - [x] **T-033** Submission detail view (FR-15)
-- [ ] **T-034** CSV / JSON export (FR-16)
+- [x] **T-034** CSV / JSON export (FR-16)
 - [ ] **T-035** Access-control audit — prove respondents are locked out (FR-17, NFR-6)
 
 ### Phase 6 — PDF
@@ -1985,7 +1985,7 @@ npm run build && npm run typecheck && npm run lint
 
 ### T-034 — CSV / JSON export (FR-16)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-032
 
 **Do:**
@@ -2040,6 +2040,11 @@ curl -sS -o /dev/null -w '%{http_code}\n' 'localhost:3000/api/admin/export?forma
 ```
 
 **Notes:**
+- Streaming was measured, not assumed. Seeded 2,004 submissions: time-to-first-byte 8ms against a 204ms total, and instrumenting the store.all() -> CSV path directly showed the heap oscillating between 12 and 20 MB (the 500-document batch being allocated and collected) and settling back to +0.3 MB after GC. Watching the dev server's RSS first suggested a climb — that was Next's own compilation cache and Node not returning RSS to the OS, not the export path.
+- Injection defence verified end to end with a hostile fixture: a designation of =HYPERLINK("http://evil","click me") exports as "'=HYPERLINK(""http://evil"",""click me"")" — prefixed and quote-doubled — and a name of Perera, "Anil" round-trips correctly.
+- Only a LEADING formula character is prefixed; one mid-string is quoted but left alone, since that is what a spreadsheet actually acts on.
+- The BOM is emitted, unauthenticated export returns 401 with no data, and an unknown format returns 400.
+- Note for analysis: scores are exported at full float precision (e.g. 3.0000000000000004), matching the stored document rather than the 2dp display. That is deliberate — the CSV is data, not a report — but it will look odd in a spreadsheet.
 
 ---
 
