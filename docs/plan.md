@@ -432,7 +432,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 
 ### Phase 0 — Foundation
 - [x] **T-001** Scaffold the Next.js + TypeScript + Tailwind project
-- [ ] **T-002** Install dependencies and wire up tooling (Vitest, lint, scripts)
+- [x] **T-002** Install dependencies and wire up tooling (Vitest, lint, scripts)
 - [ ] **T-003** Author `conf.yaml` — the complete survey configuration
 
 ### Phase 1 — Domain core (pure, testable, no UI)
@@ -539,7 +539,7 @@ npm run build && npx tsc --noEmit && npm run lint
 
 ### T-002 — Install dependencies and wire up tooling
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-001
 
 **Do:**
@@ -587,6 +587,8 @@ npm run test:run && npm run typecheck && npm run lint && npm run build
 ```
 
 **Notes:**
+- js-yaml resolved to 5.3.0, which ships its own type declarations, so `@types/js-yaml` was uninstalled again as redundant (it would shadow the real types with a v4 copy). The `load()` API used by T-004 is unchanged.
+- Vitest prints a cosmetic warning that `vitest.config.ts` uses ESM syntax while loaded as CJS; the config loads and runs correctly. Renaming it to .mts would silence it, at the cost of deviating from the filename this plan specifies.
 
 ---
 
