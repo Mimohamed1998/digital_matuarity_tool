@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { RecommendationList } from '@/components/results/RecommendationList';
 import { ScoreHeadline } from '@/components/results/ScoreHeadline';
 import { StrengthList } from '@/components/results/StrengthList';
+import { DownloadPdfButton } from '@/components/pdf/DownloadPdfButton';
 import type { AppConfig } from '@/lib/config/schema';
 import { buildRecommendations, computeScore, isComplete } from '@/lib/scoring';
 import { useSurveyHydrated, useSurveyStore } from '@/store/survey-store';
@@ -51,6 +52,7 @@ export function ResultsView({ config }: ResultsViewProps) {
   const hydrated = useSurveyHydrated();
   const answers = useSurveyStore((state) => state.answers);
   const submissionState = useSurveyStore((state) => state.submissionState);
+  const respondent = useSurveyStore((state) => state.respondent);
 
   const complete = isComplete(config, answers);
   const result = useMemo(
@@ -120,6 +122,30 @@ export function ResultsView({ config }: ResultsViewProps) {
         <>
           <RecommendationList recommendations={recommendations.improvements} config={config} />
           <StrengthList strengths={recommendations.strengths} config={config} />
+
+          <section aria-labelledby="download-heading" className="border-t border-line pt-6">
+            <h2 id="download-heading" className="text-xl font-semibold text-ink">
+              Take this with you
+            </h2>
+            <p className="mt-1 mb-4 max-w-prose text-sm text-muted">
+              Results cannot be retrieved once you close this page, so download them now if you
+              want to keep them.
+            </p>
+            <DownloadPdfButton
+              config={config}
+              result={result}
+              improvements={recommendations.improvements}
+              strengths={recommendations.strengths}
+              respondentName={
+                typeof respondent.name === 'string' && respondent.name.trim().length > 0
+                  ? respondent.name
+                  : undefined
+              }
+              respondentDesignation={
+                typeof respondent.designation === 'string' ? respondent.designation : undefined
+              }
+            />
+          </section>
         </>
       )}
     </div>

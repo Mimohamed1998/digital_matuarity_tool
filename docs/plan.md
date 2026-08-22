@@ -475,7 +475,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 
 ### Phase 6 — PDF
 - [x] **T-023** PDF document component (FR-8)
-- [ ] **T-024** Download button + client-only wiring
+- [x] **T-024** Download button + client-only wiring
 
 ### Phase 7 — Hardening & ship
 - [ ] **T-025** Accessibility and responsive pass (NFR-1, NFR-2)
@@ -2167,7 +2167,7 @@ npm run build && npm run typecheck && npm run lint
 
 ### T-024 — Download button
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-023
 
 **Do:** `src/components/pdf/DownloadPdfButton.tsx`.
@@ -2193,6 +2193,10 @@ npm run lint
 ```
 
 **Notes:**
+- Confirmed against the built output rather than assumed: /results ships 8 chunks totalling 583 KB up front, and NONE of them contain @react-pdf. The library sits in its own 1,266 KB chunk that is fetched only when the button is clicked.
+- Both `@react-pdf/renderer` and the document component are imported inside the click handler (not via next/dynamic at module scope), which is what keeps them out of the server bundle entirely as well as off the initial load.
+- The object URL is revoked on a 10s timer rather than immediately — revoking synchronously after `click()` cancels the download in some browsers.
+- Failure shows a retry affordance and a status message, never a dead button; the catch logs nothing, because the document contains the respondent's answers.
 
 ---
 
