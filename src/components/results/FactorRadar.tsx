@@ -54,8 +54,8 @@ export function FactorRadar({ config, result }: FactorRadarProps) {
             />
             <Radar
               dataKey="answer"
-              stroke={`var(--level-${result.level.value})`}
-              fill={`var(--level-${result.level.value})`}
+              stroke={`var(--level-${result.level.value}-fill)`}
+              fill={`var(--level-${result.level.value}-fill)`}
               fillOpacity={0.35}
               isAnimationActive={false}
             />

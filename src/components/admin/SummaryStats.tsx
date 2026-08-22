@@ -58,7 +58,7 @@ export function SummaryStats({ summary, config }: SummaryStatsProps) {
                     className="h-3 min-w-[2px] rounded-full"
                     style={{
                       width: `${Math.max(share, count > 0 ? 3 : 0)}%`,
-                      backgroundColor: `var(--level-${level.value})`,
+                      backgroundColor: `var(--level-${level.value}-fill)`,
                     }}
                     aria-hidden="true"
                   />

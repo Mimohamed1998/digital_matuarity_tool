@@ -67,10 +67,15 @@ export function ResultsView({ config }: ResultsViewProps) {
   // Until sessionStorage has been read there is nothing to say. Showing the empty state
   // here would look like the answers had been lost.
   if (!hydrated) {
+    // See SurveyFlow: an h1 here keeps the page from being briefly heading-less, and
+    // this branch is replaced entirely once the store rehydrates.
     return (
-      <Card>
-        <p className="text-muted">Working out your result…</p>
-      </Card>
+      <div className="flex flex-col gap-4">
+        <h1 className="text-3xl font-bold tracking-tight text-ink">Your results</h1>
+        <Card>
+          <p className="text-muted">Working out your result…</p>
+        </Card>
+      </div>
     );
   }
 

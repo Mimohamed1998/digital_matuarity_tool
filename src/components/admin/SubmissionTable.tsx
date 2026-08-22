@@ -79,7 +79,7 @@ export function SubmissionTable({ items, page, pageCount, total }: SubmissionTab
                     <span
                       aria-hidden="true"
                       className="h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: `var(--level-${item.levelValue})` }}
+                      style={{ backgroundColor: `var(--level-${item.levelValue}-fill)` }}
                     />
                     {item.levelValue} · {item.levelName}
                   </span>

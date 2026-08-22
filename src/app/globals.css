@@ -24,13 +24,24 @@
   --danger-soft: #fbeceb;
 
   /* Maturity band colours, seeded from conf.yaml `maturity_levels[].colour`.
-     --level-N is the figure colour, for fills and bars.
-     --level-N-text is the nearest variant that clears 4.5:1 against --surface. */
+     Three variants, because one colour cannot do all three jobs:
+       --level-N       the figure colour, used only as a decorative accent sitting
+                       directly against text (a card's left border).
+       --level-N-fill  graphical objects that carry meaning — chart bars, radar
+                       strokes, level dots. Clears 3:1 against --bg (WCAG 1.4.11).
+       --level-N-text  text. Clears 4.5:1 against --surface.
+     In light mode the figure's own #C9962F and #8DA84A are only ~2.7:1 on white, so
+     they are darkened for the fill and text roles rather than used raw. */
   --level-1: #b0392e;
   --level-2: #c9962f;
   --level-3: #2e7e8c;
   --level-4: #8da84a;
   --level-5: #2e6b3a;
+  --level-1-fill: #b0392e;
+  --level-2-fill: #b5872a;
+  --level-3-fill: #2e7e8c;
+  --level-4-fill: #809843;
+  --level-5-fill: #2e6b3a;
   --level-1-text: #b0392e;
   --level-2-text: #956f23;
   --level-3-text: #2e7e8c;
@@ -60,6 +71,11 @@
     --level-3: #438b98;
     --level-4: #8da84a;
     --level-5: #5c8c65;
+    --level-1-fill: #c2675e;
+    --level-2-fill: #c9962f;
+    --level-3-fill: #438b98;
+    --level-4-fill: #8da84a;
+    --level-5-fill: #5c8c65;
     --level-1-text: #c2675e;
     --level-2-text: #c9962f;
     --level-3-text: #438b98;

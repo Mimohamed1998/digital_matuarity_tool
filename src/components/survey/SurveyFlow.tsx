@@ -67,10 +67,15 @@ export function SurveyFlow({ config }: SurveyFlowProps) {
   }, [currentStep, factor, factorIndex, factors.length, hydrated]);
 
   if (!hydrated) {
+    // Carries its own h1 so the page is never briefly heading-less. This branch is
+    // replaced wholesale once the store rehydrates, so there is never a second h1.
     return (
-      <Card>
-        <p className="text-muted">Loading your progress…</p>
-      </Card>
+      <div className="flex flex-col gap-4">
+        <h1 className="text-3xl font-bold tracking-tight text-ink">Survey</h1>
+        <Card>
+          <p className="text-muted">Loading your progress…</p>
+        </Card>
+      </div>
     );
   }
 

@@ -478,7 +478,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-024** Download button + client-only wiring
 
 ### Phase 7 — Hardening & ship
-- [ ] **T-025** Accessibility and responsive pass (NFR-1, NFR-2)
+- [x] **T-025** Accessibility and responsive pass (NFR-1, NFR-2)
 - [ ] **T-026** Error, empty and loading states + `not-found`
 - [ ] **T-027** README + Vercel deployment configuration (FR-13)
 - [ ] **T-028** *(optional)* Playwright happy-path smoke test
@@ -2204,7 +2204,7 @@ npm run lint
 
 ### T-025 — Accessibility and responsive pass
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-024
 
 **Do:** Sweep every page against NFR-1 and NFR-2.
@@ -2234,6 +2234,11 @@ npm run build && npm run lint
 ```
 
 **Notes:**
+- Contrast is now enforced by `tests/contrast.test.ts`, which parses the real tokens out of globals.css and asserts 60 ratios across both themes. A hand-checked palette is only true on the day it was checked; this fails the build if a token is changed to something unreadable.
+- That test caught a genuine defect the plan predicted: the figure colours #C9962F (Level 2) and #8DA84A (Level 4) are 2.66:1 and 2.68:1 on white — fine as text after the earlier -text adjustment, but they were still being used raw as CHART BAR and DOT fills, which do carry meaning. Added a third variant, --level-N-fill, computed to clear 3:1 against --bg (the stricter of the two light backgrounds), and pointed the charts, summary bars and table dots at it. --level-N now means only 'the source figure's colour, used as a decorative accent beside text', and a test documents that boundary.
+- Heading hierarchy verified per page against rendered HTML: exactly one h1 everywhere, no skipped levels. /survey and /results previously had NO h1 during their pre-hydration loading state; both now carry one, so no page is ever momentarily heading-less.
+- Verified: no unguarded `outline: none` (only the `:focus:not(:focus-visible)` companion rule); every wide table sits in its own `.scroll-x` container, and the only min-w values in the codebase are those tables plus a 2px bar minimum; every input is either inside `<Field>` (which supplies label + aria-describedby + aria-invalid) or has an explicit htmlFor label; prefers-reduced-motion is honoured globally.
+- Honest limitation: `html { overflow-x: hidden }` guarantees no horizontal page scroll rather than proving none is possible. All wide content is in scroll containers, but a true 320px visual pass needs a browser, which was not available here.
 
 ---
 

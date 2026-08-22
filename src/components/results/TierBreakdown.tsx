@@ -58,7 +58,7 @@ export function TierBreakdown({ result, minScore, maxScore, decimals }: TierBrea
             />
             <Bar dataKey="score" radius={[0, 4, 4, 0]} isAnimationActive={false}>
               {data.map((entry) => (
-                <Cell key={entry.name} fill={`var(--level-${result.level.value})`} />
+                <Cell key={entry.name} fill={`var(--level-${result.level.value}-fill)`} />
               ))}
             </Bar>
           </BarChart>
