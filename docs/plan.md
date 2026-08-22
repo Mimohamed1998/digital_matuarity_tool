@@ -466,7 +466,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 
 ### Phase 5b — Admin data access *(added 2026-08-22)*
 - [x] **T-029** Extend the storage layer with read + stream methods
-- [ ] **T-030** Admin session auth primitives (password, session token, rate limit)
+- [x] **T-030** Admin session auth primitives (password, session token, rate limit)
 - [ ] **T-031** Middleware gate + login/logout routes (FR-14, FR-17)
 - [ ] **T-032** Admin dashboard — summary stats + paginated submissions (FR-15)
 - [ ] **T-033** Submission detail view (FR-15)
@@ -1769,7 +1769,7 @@ npm run test:run -- tests/storage.test.ts && npm run typecheck && npm run lint
 
 ### T-030 — Admin session auth primitives
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-002
 
 **Do:**
@@ -1823,6 +1823,10 @@ npm run test:run -- tests/auth.test.ts && npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- DEVIATION worth knowing: the plan says throw at MODULE LOAD when ADMIN_PASSWORD is missing or weak. It is validated on first use instead. `next build` imports every route module, so a module-load throw would make the build itself require the production secret — breaking local builds and CI, and tempting someone to commit a placeholder. The check still fires before anyone can authenticate, and `isAdminPasswordConfigured()` / `isSessionSecretConfigured()` let the login route report a misconfiguration without leaking it. Same reasoning for ADMIN_SESSION_SECRET.
+- 20 tests pass, including the two that matter most: an `alg: none` token and an HS256 token relabelled RS256 are both rejected, because jwtVerify pins algorithms to ['HS256'].
+- Tests also assert no secret appears in any thrown message.
+- Rate limiting keys on a SHA-256 of the IP, so no raw address is held in memory, and the per-instance limitation is documented in the file itself.
 
 ---
 
