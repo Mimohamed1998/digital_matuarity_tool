@@ -451,7 +451,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-012** Survey store (zustand + sessionStorage)
 - [x] **T-013** Respondent information step (FR-11)
 - [x] **T-014** Question card component
-- [ ] **T-015** Survey page orchestration — one question at a time (FR-4)
+- [x] **T-015** Survey page orchestration — one question at a time (FR-4)
 - [ ] **T-016** Review step — read back submitted answers (FR-5)
 
 ### Phase 4 — Results
@@ -1394,7 +1394,7 @@ npm run build && npm run typecheck && npm run lint
 
 ### T-015 — Survey page orchestration (FR-4)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-013, T-014
 
 **Do:** `src/app/survey/page.tsx` — a thin server component that loads the config and passes it to
@@ -1426,6 +1426,10 @@ npm run build && npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- Exactly one factor question is in the DOM at a time: the flow returns a single QuestionCard for the current step, it does not render a list and hide the rest.
+- Focus moves to the new question heading on a step change, but deliberately not on first paint — grabbing focus on load is disorienting and there is nothing new to announce yet. The change is also announced through an aria-live=polite region.
+- Added `src/components/survey/ReviewPanel.tsx` here as a placeholder so the build passes; T-016 replaces it with the real review step.
+- The `returnToReview` flag makes an Edit jump from review behave as a round trip — Next and Back both return to review rather than continuing through the questionnaire.
 
 ---
 
