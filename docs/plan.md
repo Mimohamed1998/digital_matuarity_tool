@@ -442,7 +442,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-007** Recommendation engine + unit tests
 
 ### Phase 2 — App shell
-- [ ] **T-008** Root layout, design tokens, global styles (light + dark)
+- [x] **T-008** Root layout, design tokens, global styles (light + dark)
 - [ ] **T-009** Base UI primitives (`Button`, `Card`, `Field`, `ProgressBar`, `RadioStatement`)
 - [ ] **T-010** Landing page (FR-1)
 - [ ] **T-011** Model / theory page (FR-2)
@@ -1123,7 +1123,7 @@ npm run test:run && npm run typecheck && npm run lint
 
 ### T-008 — Root layout, design tokens, global styles
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-001
 
 **Do:**
@@ -1160,6 +1160,10 @@ npm run build && npm run lint
 ```
 
 **Notes:**
+- Dropped the scaffold's next/font Geist import for a system font stack: it removes a build-time network fetch and the font-swap layout shift, and matches the plain, document-like feel of a research instrument.
+- Each level colour has two tokens. `--level-N` is the figure colour from conf.yaml, used for fills and bars; `--level-N-text` is the nearest variant that clears 4.5:1 against --surface. #C9962F (Level 2) is only 2.66:1 on white, so using the raw figure colour as text would have failed WCAG — this is the T-025 failure the plan predicted, headed off here.
+- Likewise `--border` (decorative separators) and `--border-strong` (>= 3:1, for form-control boundaries) are separate.
+- Tailwind v4 `@theme inline` maps the tokens to utilities; note the utility names are bg/surface/line/ink/muted/accent, since `text-text` and `border-border` read badly.
 
 ---
 
