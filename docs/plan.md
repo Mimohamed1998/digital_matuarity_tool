@@ -450,7 +450,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 ### Phase 3 — Survey flow
 - [x] **T-012** Survey store (zustand + sessionStorage)
 - [x] **T-013** Respondent information step (FR-11)
-- [ ] **T-014** Question card component
+- [x] **T-014** Question card component
 - [ ] **T-015** Survey page orchestration — one question at a time (FR-4)
 - [ ] **T-016** Review step — read back submitted answers (FR-5)
 
@@ -1360,7 +1360,7 @@ npm run build && npm run typecheck && npm run lint
 
 ### T-014 — Question card component
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-009, T-012
 
 **Do:** `src/components/survey/QuestionCard.tsx` — client component. Props: the factor object,
@@ -1387,6 +1387,8 @@ npm run build && npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- Forwards a ref to the `<h2>` (which carries tabIndex={-1}) so T-015 can move focus to the new question on a step change without the card knowing anything about navigation.
+- The scale values and labels are passed in from config rather than hardcoded 1-5, so a config with a different `min_answer`/`max_answer` still renders correctly.
 
 ---
 
