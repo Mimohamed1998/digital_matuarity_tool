@@ -481,7 +481,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-025** Accessibility and responsive pass (NFR-1, NFR-2)
 - [x] **T-026** Error, empty and loading states + `not-found`
 - [x] **T-027** README + Vercel deployment configuration (FR-13)
-- [ ] **T-028** *(optional)* Playwright happy-path smoke test
+- [x] **T-028** *(optional)* Playwright happy-path smoke test
 
 ---
 
@@ -2340,7 +2340,7 @@ npm run build && npm run test:run
 
 ### T-028 — *(optional)* Playwright smoke test
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-027
 
 **Do:** `npm i -D @playwright/test && npx playwright install chromium`.
@@ -2366,6 +2366,12 @@ npm run build && npm run test:e2e
 ```
 
 **Notes:**
+- 6 tests pass against a real production build in Chromium — this is the only check in the suite that actually drives the survey the way a respondent would.
+- The happy path asserts a SPECIFIC score: it enters the §3.6 worked example and expects 3.80 and 'Level 4 · Established', not merely that a number appeared. It also asserts exactly one fieldset in the DOM per step (proving one-question-at-a-time), the progressbar's aria-valuenow, and that the PDF download fires with the filename digital-maturity-established-YYYY-MM-DD.pdf.
+- Added two specs beyond the plan, both covering behaviour nothing else exercised in a browser: an edit from the review step returns to review rather than continuing forwards, and a mid-survey refresh keeps the answer (NFR-5).
+- FIXED an order dependency: Playwright runs spec FILES alphabetically, so admin.spec.ts runs before happy-path.spec.ts — the admin spec's original reliance on 'the submission the happy-path test created' failed on the first run. It now seeds its own submission through the API in beforeAll and asserts `stored: true`, so it is self-sufficient.
+- The admin spec also proves the name/designation split in a browser: the dashboard table contains the designation and NOT the respondent's name, while the detail page shows the name.
+- playwright.config.ts sets SUBMISSION_STORE=fs for the same reason the audit does — a production server with no DATABASE_URL persists nothing, and the admin spec would otherwise pass vacuously.
 
 ---
 
