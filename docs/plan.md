@@ -444,7 +444,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 ### Phase 2 — App shell
 - [x] **T-008** Root layout, design tokens, global styles (light + dark)
 - [x] **T-009** Base UI primitives (`Button`, `Card`, `Field`, `ProgressBar`, `RadioStatement`)
-- [ ] **T-010** Landing page (FR-1)
+- [x] **T-010** Landing page (FR-1)
 - [ ] **T-011** Model / theory page (FR-2)
 
 ### Phase 3 — Survey flow
@@ -1208,7 +1208,7 @@ npm run build && npm run typecheck && npm run lint
 
 ### T-010 — Landing page (FR-1)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-009, T-004
 
 **Do:** Replace `src/app/page.tsx`. Server component; read content via `loadConfig()`.
@@ -1236,6 +1236,7 @@ npm run build && npm run lint
 ```
 
 **Notes:**
+- Every string on the page comes from conf.yaml or is generic UI copy; the tier and factor lists are mapped straight from config, so adding a factor changes the page with no code edit. Question count in the hero is `factors.length`, not a literal.
 
 ---
 
