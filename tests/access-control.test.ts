@@ -1,5 +1,5 @@
-import { spawn, type ChildProcess } from 'node:child_process';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -20,6 +20,7 @@ const ADMIN_SESSION_SECRET = 'audit-test-session-secret-at-least-32-bytes';
 const SEEDED_NAME = 'Marguerite Ashworth-Vance';
 
 let server: ChildProcess;
+let serverOutput = '';
 let sessionCookie = '';
 let seededId = '';
 
@@ -33,21 +34,55 @@ const VALID_ANSWERS = {
   development: 3,
 };
 
-async function waitForServer(timeoutMs = 120_000): Promise<void> {
+/**
+ * `next start` needs a production build to exist.
+ *
+ * On a clean checkout there isn't one, and without this the suite spends two minutes
+ * polling a server that was never going to start, then reports a timeout that says
+ * nothing about the real cause. Building here keeps the suite self-sufficient in CI.
+ */
+function ensureProductionBuild(): void {
+  if (existsSync(path.join(process.cwd(), '.next', 'BUILD_ID'))) return;
+
+  console.log('[access-control] no production build found — running `next build` first…');
+  const build = spawnSync('npx', ['next', 'build'], { stdio: 'inherit' });
+  if (build.status !== 0) {
+    throw new Error('`next build` failed, so the access-control audit cannot run');
+  }
+}
+
+async function waitForServer(timeoutMs = 60_000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
+    if (server.exitCode !== null) {
+      // The server died rather than never arriving. Its own output is far more useful
+      // than a timeout, so surface that instead.
+      throw new Error(
+        `the production server exited with code ${server.exitCode} before serving a request:\n${serverOutput.trim() || '(no output captured)'}`,
+      );
+    }
     try {
-      const response = await fetch(`${BASE}/`, { redirect: 'manual' });
+      // Each attempt gets its own timeout. Without one, anything that accepts the TCP
+      // connection but never replies — another process already holding this port —
+      // blocks the poll forever and the deadline below is never re-checked.
+      const response = await fetch(`${BASE}/`, {
+        redirect: 'manual',
+        signal: AbortSignal.timeout(2_000),
+      });
       if (response.status < 500) return;
     } catch {
-      // not up yet
+      // not up yet, or that attempt timed out
     }
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
-  throw new Error('production server did not start in time');
+  throw new Error(
+    `production server did not start within ${timeoutMs}ms. Its output was:\n${serverOutput.trim() || '(no output captured)'}`,
+  );
 }
 
 beforeAll(async () => {
+  ensureProductionBuild();
+
   server = spawn('npx', ['next', 'start', '--port', String(PORT)], {
     env: {
       ...process.env,
@@ -57,9 +92,18 @@ beforeAll(async () => {
       // Persist for real, so "no data leaked" is a claim about data that exists.
       SUBMISSION_STORE: 'fs',
     },
-    stdio: 'ignore',
+    // Captured rather than ignored: if the server refuses to start, its own message is
+    // what diagnoses the problem.
+    stdio: ['ignore', 'pipe', 'pipe'],
     detached: false,
   });
+  server.stdout?.on('data', (chunk: Buffer) => {
+    serverOutput += chunk.toString();
+  });
+  server.stderr?.on('data', (chunk: Buffer) => {
+    serverOutput += chunk.toString();
+  });
+
   await waitForServer();
 
   // Seed one submission so "did any data leak?" is a question with a real answer.

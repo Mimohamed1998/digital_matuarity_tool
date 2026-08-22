@@ -43,8 +43,8 @@ Useful commands:
 | `npm run build` | Production build — **fails loudly if `conf.yaml` is invalid** |
 | `npm start` | Serve the production build |
 | `npm test` | Unit tests, watching for changes |
-| `npm run test:run` | Unit tests, once |
-| `npm run typecheck` | TypeScript, no emit |
+| `npm run test:run` | Unit tests, once. The access-control suite runs a real production server and will build one first if none exists |
+| `npm run typecheck` | TypeScript. Runs `next typegen` first, because Next generates the route types (`PageProps`, `LayoutProps`) that the app code depends on |
 | `npm run lint` | ESLint |
 | `npm run db:migrate` | Create the database table (needs `DATABASE_URL`) |
 
