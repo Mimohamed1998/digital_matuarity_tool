@@ -474,7 +474,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-035** Access-control audit — prove respondents are locked out (FR-17, NFR-6)
 
 ### Phase 6 — PDF
-- [ ] **T-023** PDF document component (FR-8)
+- [x] **T-023** PDF document component (FR-8)
 - [ ] **T-024** Download button + client-only wiring
 
 ### Phase 7 — Hardening & ship
@@ -2124,7 +2124,7 @@ grep -rn "lib/auth" src/components src/app --include=*.tsx | grep -v "app/admin"
 
 ### T-023 — PDF document component (FR-8)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-019
 
 **Do:** `src/components/pdf/ResultsPdfDocument.tsx` using `@react-pdf/renderer`.
@@ -2158,6 +2158,10 @@ npm run build && npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- Rendered a real PDF and inspected the file rather than trusting the component: 3 pages, fonts Helvetica and Helvetica-Bold only (no remote fetching), ZERO image XObjects (nothing screenshotted), and 187 text-showing operators — the output is genuinely selectable text.
+- Extracted the text back out and diffed it against conf.yaml: all 7 statements and all 7 recommendation texts appear in full, so nothing is clipped at a page break. The recommendation order matches the engine exactly (People & Culture 0.27, Strategy 0.26, Development 0.22, Design 0.21, Technology 0.13, Research 0.12) with Leadership in Strengths.
+- FIXED a real defect this inspection caught: @react-pdf hyphenates by default, which in the narrow table columns produced "Organisational En-ablers" and "trans-formation" — 8 bad breaks. `Font.registerHyphenationCallback((word) => [word])` disables it and words now wrap intact (0 bad breaks).
+- Every long block uses wrap={false} so a recommendation moves whole to the next page rather than splitting.
 
 ---
 
