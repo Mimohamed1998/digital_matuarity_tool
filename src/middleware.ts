@@ -1,0 +1,46 @@
+import { NextResponse, type NextRequest } from 'next/server';
+// Relative, not the `@/` alias, and deliberately so. This is the one module that gets
+// compiled into an Edge Function, and Vercel's Edge bundler resolves imports from the
+// built output rather than through tsconfig `paths` — a tsconfig alias here fails there
+// with "referencing unsupported modules" while building perfectly well locally.
+// This file must also live under src/, which is where Next.js looks for middleware when
+// the project uses a src directory.
+import { SESSION_COOKIE, verifySessionToken } from './lib/auth/session';
+
+/**
+ * Deny-by-default gate for every admin surface (FR-14, FR-17).
+ *
+ * This is the first of two gates. Each admin page and route also checks the session
+ * itself (NFR-6) — if this matcher were ever misconfigured, or matching behaviour
+ * changed in a future Next.js version, the pages must still refuse.
+ */
+export const config = { matcher: ['/admin/:path*', '/api/admin/:path*'] };
+
+/** The only two paths that must work without a session — otherwise nobody can log in. */
+const PUBLIC_ADMIN_PATHS = new Set(['/admin/login', '/api/admin/login']);
+
+function withNoIndex(response: NextResponse): NextResponse {
+  response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  return response;
+}
+
+export async function middleware(request: NextRequest): Promise<NextResponse> {
+  const { pathname } = request.nextUrl;
+
+  if (PUBLIC_ADMIN_PATHS.has(pathname)) {
+    return withNoIndex(NextResponse.next());
+  }
+
+  const token = request.cookies.get(SESSION_COOKIE)?.value;
+  if (await verifySessionToken(token)) {
+    return withNoIndex(NextResponse.next());
+  }
+
+  if (pathname.startsWith('/api/admin')) {
+    // No detail, and above all no data.
+    return withNoIndex(NextResponse.json({ error: 'unauthorized' }, { status: 401 }));
+  }
+
+  const loginUrl = new URL('/admin/login', request.url);
+  return withNoIndex(NextResponse.redirect(loginUrl));
+}

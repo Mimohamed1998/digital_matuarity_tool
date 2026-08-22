@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Design tokens
+   Every colour is defined here on bare :root. The dark block below redefines
+   only the values — never introduces a colour that has no light definition.
+   Contrast is verified: body text >= 4.5:1, interactive boundaries >= 3:1.
+   ========================================================================== */
+
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #eef1f5;
+  --border: #dfe3ea;
+  --border-strong: #7f8896;
+  --text: #16181d;
+  --text-muted: #5a6270;
+  --accent: #1c5c86;
+  --accent-hover: #164a6d;
+  --accent-contrast: #ffffff;
+  --accent-soft: #e6eff6;
+  --focus: #1c5c86;
+  --danger: #a3302a;
+  --danger-soft: #fbeceb;
+
+  /* Maturity band colours, seeded from conf.yaml `maturity_levels[].colour`.
+     Three variants, because one colour cannot do all three jobs:
+       --level-N       the figure colour, used only as a decorative accent sitting
+                       directly against text (a card's left border).
+       --level-N-fill  graphical objects that carry meaning — chart bars, radar
+                       strokes, level dots. Clears 3:1 against --bg (WCAG 1.4.11).
+       --level-N-text  text. Clears 4.5:1 against --surface.
+     In light mode the figure's own #C9962F and #8DA84A are only ~2.7:1 on white, so
+     they are darkened for the fill and text roles rather than used raw. */
+  --level-1: #b0392e;
+  --level-2: #c9962f;
+  --level-3: #2e7e8c;
+  --level-4: #8da84a;
+  --level-5: #2e6b3a;
+  --level-1-fill: #b0392e;
+  --level-2-fill: #b5872a;
+  --level-3-fill: #2e7e8c;
+  --level-4-fill: #809843;
+  --level-5-fill: #2e6b3a;
+  --level-1-text: #b0392e;
+  --level-2-text: #956f23;
+  --level-3-text: #2e7e8c;
+  --level-4-text: #6a7e38;
+  --level-5-text: #2e6b3a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1013;
+    --surface: #16181d;
+    --surface-2: #1e222a;
+    --border: #2b303a;
+    --border-strong: #6b7380;
+    --text: #e8eaee;
+    --text-muted: #a4adba;
+    --accent: #7ab5e0;
+    --accent-hover: #9acbef;
+    --accent-contrast: #0e1013;
+    --accent-soft: #1a2733;
+    --focus: #7ab5e0;
+    --danger: #e08d86;
+    --danger-soft: #2a1a19;
+
+    --level-1: #c2675e;
+    --level-2: #c9962f;
+    --level-3: #438b98;
+    --level-4: #8da84a;
+    --level-5: #5c8c65;
+    --level-1-fill: #c2675e;
+    --level-2-fill: #c9962f;
+    --level-3-fill: #438b98;
+    --level-4-fill: #8da84a;
+    --level-5-fill: #5c8c65;
+    --level-1-text: #c2675e;
+    --level-2-text: #c9962f;
+    --level-3-text: #438b98;
+    --level-4-text: #8da84a;
+    --level-5-text: #5c8c65;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--text);
+  --color-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-accent-soft: var(--accent-soft);
+  --color-focus: var(--focus);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "Noto Sans", sans-serif;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+html {
+  /* No horizontal page scroll at any width — NFR-1. */
+  overflow-x: hidden;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* One focus treatment for everything. `outline: none` appears nowhere in this project. */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Only remove the ring for pointer users who did not use the keyboard. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Utility: content that is available to screen readers but not painted. */
+.sr-only-focusable:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Wide content (tables, charts) scrolls inside its own container, never the page. */
+.scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
