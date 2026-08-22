@@ -448,7 +448,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-011** Model / theory page (FR-2)
 
 ### Phase 3 — Survey flow
-- [ ] **T-012** Survey store (zustand + sessionStorage)
+- [x] **T-012** Survey store (zustand + sessionStorage)
 - [ ] **T-013** Respondent information step (FR-11)
 - [ ] **T-014** Question card component
 - [ ] **T-015** Survey page orchestration — one question at a time (FR-4)
@@ -1284,7 +1284,7 @@ npm run build && npm run lint
 
 ### T-012 — Survey store
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-005, T-002
 
 **Do:** `src/store/survey-store.ts` — zustand store with `persist` middleware writing to
@@ -1318,6 +1318,9 @@ npm run typecheck && npm run lint && npm run build
 ```
 
 **Notes:**
+- Version invalidation lives in `setConfigVersion`, called once by the survey page: if the persisted `configVersion` differs from the current `meta.version`, the whole store resets rather than carrying answers across a changed questionnaire.
+- `useSurveyHydrated()` is built on `useSyncExternalStore`, not `hasHydrated()` read during render (not reactive) and not setState-in-effect (which the react-hooks lint rule rejects, rightly — it cascades renders). The results page needs this to avoid flashing its empty state over data that is about to rehydrate.
+- Added `returnToReview` to the state so an Edit jump from the review panel can come back to review instead of continuing forwards (T-016).
 
 ---
 
