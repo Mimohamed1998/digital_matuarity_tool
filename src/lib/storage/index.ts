@@ -69,9 +69,15 @@ export function getStore(): SubmissionStore {
     }
   }
 
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production' && process.env.SUBMISSION_STORE !== 'fs') {
     // A production deployment with no database is a misconfiguration. Say so loudly in
     // the logs, but still accept the submission rather than failing the respondent.
+    //
+    // SUBMISSION_STORE=fs is a deliberate opt-in escape hatch, used by the
+    // access-control audit (tests/access-control.test.ts) to run a real production
+    // server that actually persists — otherwise "no data leaked" would only prove that
+    // no data existed. Do not set it on a real deployment: a serverless filesystem is
+    // ephemeral and the data would not survive the instance.
     store = createNoopStore('DATABASE_URL is not set in production');
     return store;
   }

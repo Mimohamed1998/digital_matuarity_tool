@@ -471,7 +471,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-032** Admin dashboard — summary stats + paginated submissions (FR-15)
 - [x] **T-033** Submission detail view (FR-15)
 - [x] **T-034** CSV / JSON export (FR-16)
-- [ ] **T-035** Access-control audit — prove respondents are locked out (FR-17, NFR-6)
+- [x] **T-035** Access-control audit — prove respondents are locked out (FR-17, NFR-6)
 
 ### Phase 6 — PDF
 - [ ] **T-023** PDF document component (FR-8)
@@ -2050,7 +2050,7 @@ curl -sS -o /dev/null -w '%{http_code}\n' 'localhost:3000/api/admin/export?forma
 
 ### T-035 — Access-control audit (FR-17, NFR-6)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-034
 
 This task exists because "users should not be able to access this" is a requirement, and a
@@ -2112,6 +2112,11 @@ grep -rn "lib/auth" src/components src/app --include=*.tsx | grep -v "app/admin"
 ```
 
 **Notes:**
+- 32 tests, run against a real `next start` production server. Every row of the §8 table passes unauthenticated and authenticated.
+- The leak test was initially weaker than it looked: with no DATABASE_URL the production server selects the no-op store, so nothing was persisted and "no name leaked" would only have proved no data existed. Added an explicit `SUBMISSION_STORE=fs` opt-in (documented in index.ts as test-only), so the audit seeds a real submission, asserts `stored: true`, then proves the name and id appear in the AUTHENTICATED detail page and CSV while appearing in NO unauthenticated response body.
+- The manual sweep is now automated as four import-boundary tests that run on every `npm test`, rather than a grep that is only true on the day someone runs it: lib/auth reachable only from admin routes; no client component imports storage or auth at runtime (type-only imports are allowed, since they are erased); store.list/get/all/summary called only from admin surfaces; no NEXT_PUBLIC_ variable carrying admin or database config; the filesystem-reading config loader never in a client component.
+- The read-method check first flagged `guard.ts` — a false positive on `store.get(SESSION_COOKIE)`, the cookie store. Renamed that local to `cookieStore`, which is clearer regardless.
+- Verified separately: no secret name or value appears anywhere in .next/static/ or .next/. robots.txt disallows /admin and /api/admin; the three security headers are set in next.config.ts and asserted on a live response.
 
 ---
 

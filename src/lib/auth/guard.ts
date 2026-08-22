@@ -9,6 +9,6 @@ import { SESSION_COOKIE, verifySessionToken } from './session';
  * page and route must still refuse on its own. Each one calls this.
  */
 export async function hasAdminSession(): Promise<boolean> {
-  const store = await cookies();
-  return verifySessionToken(store.get(SESSION_COOKIE)?.value);
+  const cookieStore = await cookies();
+  return verifySessionToken(cookieStore.get(SESSION_COOKIE)?.value);
 }
