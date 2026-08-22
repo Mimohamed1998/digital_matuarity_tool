@@ -462,7 +462,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 ### Phase 5 — Persistence
 - [x] **T-020** Storage adapters (Postgres + filesystem) behind one interface
 - [x] **T-021** `POST /api/submissions` route (FR-9)
-- [ ] **T-022** Wire submission into the survey completion flow
+- [x] **T-022** Wire submission into the survey completion flow
 
 ### Phase 5b — Admin data access *(added 2026-08-22)*
 - [ ] **T-029** Extend the storage layer with read + stream methods
@@ -1657,7 +1657,7 @@ ls data/submissions/
 
 ### T-022 — Wire submission into the flow
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-021, T-016
 
 **Do:** On "See my results" in `ReviewPanel`:
@@ -1683,6 +1683,9 @@ npm run build && npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- Navigation to /results happens in a `finally`, so it runs whether the POST succeeds, fails or throws — offline still reaches the result.
+- Double submission is guarded twice: the button disables on `submissionState === 'saving'`, and an `inFlight` ref covers two clicks landing in the same tick before React re-renders.
+- The catch block deliberately logs nothing: the request body is personal data and the browser console is not a safe place for it. The failure surfaces as a quiet note on the results page instead.
 
 ---
 

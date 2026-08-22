@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -24,6 +25,13 @@ export function ReviewPanel({ config, onEdit }: ReviewPanelProps) {
   const answers = useSurveyStore((state) => state.answers);
   const respondent = useSurveyStore((state) => state.respondent);
   const goTo = useSurveyStore((state) => state.goTo);
+  const startedAt = useSurveyStore((state) => state.startedAt);
+  const submissionState = useSurveyStore((state) => state.submissionState);
+  const setSubmissionState = useSurveyStore((state) => state.setSubmissionState);
+
+  // Belt and braces against a double submission: the button's disabled state covers the
+  // common case, this ref covers the race between two clicks in the same tick.
+  const inFlight = useRef(false);
 
   const missing = missingFactorIds(config, answers);
   const missingNames = missing
@@ -32,6 +40,36 @@ export function ReviewPanel({ config, onEdit }: ReviewPanelProps) {
 
   const stepForFactor = (factorId: string) =>
     config.factors.findIndex((factor) => factor.id === factorId) + 1;
+
+  /**
+   * Send the response to the researcher's dataset, then show the results.
+   *
+   * The score is computed in the browser, so the navigation happens regardless of what
+   * the POST does. A storage outage must never cost a respondent their result (OD-5).
+   */
+  const handleSubmit = async () => {
+    if (inFlight.current || missing.length > 0) return;
+    inFlight.current = true;
+    setSubmissionState('saving');
+
+    try {
+      const response = await fetch('/api/submissions', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          respondent,
+          answers,
+          durationMs: startedAt ? Date.now() - startedAt : 0,
+        }),
+      });
+      setSubmissionState(response.ok ? 'saved' : 'error');
+    } catch {
+      // Deliberately no console logging here — the request body is personal data.
+      setSubmissionState('error');
+    } finally {
+      router.push('/results');
+    }
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -135,11 +173,12 @@ export function ReviewPanel({ config, onEdit }: ReviewPanelProps) {
             <span aria-hidden="true">←</span> Back to the last question
           </Button>
           <Button
-            onClick={() => router.push('/results')}
-            disabled={missing.length > 0}
+            onClick={handleSubmit}
+            disabled={missing.length > 0 || submissionState === 'saving'}
+            aria-busy={submissionState === 'saving'}
             aria-describedby={missing.length > 0 ? 'review-missing-hint' : undefined}
           >
-            See my results
+            {submissionState === 'saving' ? 'Working out your result…' : 'See my results'}
           </Button>
         </div>
         {missing.length > 0 && (

@@ -50,6 +50,7 @@ interface ResultsViewProps {
 export function ResultsView({ config }: ResultsViewProps) {
   const hydrated = useSurveyHydrated();
   const answers = useSurveyStore((state) => state.answers);
+  const submissionState = useSurveyStore((state) => state.submissionState);
 
   const complete = isComplete(config, answers);
   const result = useMemo(
@@ -96,6 +97,15 @@ export function ResultsView({ config }: ResultsViewProps) {
         maxScore={config.scoring.max_answer}
         decimals={config.scoring.decimals}
       />
+
+      {submissionState === 'error' && (
+        // Quiet, and deliberately not an error dialog: nothing about the result below is
+        // affected, only the research dataset.
+        <p className="rounded-md border border-line bg-surface-2 p-4 text-sm text-muted">
+          Your response could not be saved for the study. Your result below is complete and
+          correct — you can still download it as a PDF.
+        </p>
+      )}
 
       <TierBreakdown
         result={result}
