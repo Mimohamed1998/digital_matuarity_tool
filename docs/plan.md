@@ -62,6 +62,15 @@ Plus:
   *"users might not able to retrieve a previously done survey"*. Do not build auth.
 - **Accessibility is not a later phase.** Every interactive element gets a label, keyboard access,
   and a visible focus ring as it is built.
+- **Task IDs are stable identifiers, not execution order.** The Task Board in §8 defines the order.
+  Admin tasks (T-029…T-035) were added after the rest was written, so the IDs are not strictly
+  ascending as you read down the board. **Always go by board position, never by number.**
+- **Admin surfaces are deny-by-default.** Anything under `/admin` or `/api/admin` must be
+  unreachable without a valid admin session, and must be gated in *two* places — the middleware
+  *and* the route or page itself.
+- **Respondent data is personal data.** Names, designations and free text leave the server only
+  through an authenticated admin route. Never log it, never put it in an error message, never
+  return it from a public endpoint.
 
 ---
 
@@ -93,6 +102,10 @@ static page explains the theory behind the model.
 | FR-11 | Collect General Information (name, designation, experience, qualification) | p2 |
 | FR-12 | Score maps to a named maturity level (1–5) | p7, pyramid figure |
 | FR-13 | Deployed on Vercel | p1 |
+| FR-14 | Admin must authenticate before reaching any admin surface | added 2026-08-22 |
+| FR-15 | Admin can list and view every submission, with summary statistics | added 2026-08-22 |
+| FR-16 | Admin can export all submissions as CSV and as JSON | added 2026-08-22 |
+| FR-17 | Respondents cannot reach admin surfaces, or any other respondent's data | added 2026-08-22 |
 
 Non-functional:
 
@@ -103,6 +116,8 @@ Non-functional:
 | NFR-3 | Scoring engine covered by unit tests, including exact worked examples |
 | NFR-4 | Changing `conf.yaml` alone can add/remove a factor or a whole tier, with **no code change** |
 | NFR-5 | Survey progress survives an accidental page refresh (sessionStorage), but is not retrievable later |
+| NFR-6 | Admin access is deny-by-default and gated twice: in middleware **and** in the route/page itself |
+| NFR-7 | Export streams — memory stays flat regardless of how many submissions exist |
 
 ---
 
@@ -228,7 +243,8 @@ Chosen for: Vercel-native, minimal moving parts, and a pure-function core that i
 | Survey state | **`zustand`** (with `persist` → sessionStorage) | Much less boilerplate than context+reducer |
 | Charts | **`recharts`** | Tier bar chart + factor radar |
 | PDF | **`@react-pdf/renderer`**, client-side, dynamically imported | Declarative, no headless browser, stays out of the serverless bundle |
-| Storage | **Vercel Blob** in prod, local filesystem in dev, behind one interface | Requirement is write-only JSON; Blob is the least infrastructure |
+| Storage | **Neon Postgres** (`@neondatabase/serverless`), JSON document in a `jsonb` column; local filesystem in dev, behind one interface | Admin needs list, aggregate and export — see OD-5 for why blob-per-file was rejected |
+| Admin auth | **`jose`** — HMAC-signed session cookie over a single shared password | One researcher, no user accounts; Edge-compatible, zero transitive dependencies |
 | Unit tests | **Vitest** | Fast, zero-config with TS |
 | E2E (optional) | **Playwright** | One happy-path smoke test |
 
@@ -241,6 +257,7 @@ Node 20+. Package manager: **npm** (keep it boring; `package-lock.json` is commi
 ```
 .
 ├── conf.yaml                          # THE survey configuration — single source of truth
+├── middleware.ts                      # gates /admin/* and /api/admin/*
 ├── docs/
 │   ├── plan.md                        # this file
 │   ├── requirements-extract.md
@@ -256,23 +273,40 @@ Node 20+. Package manager: **npm** (keep it boring; `package-lock.json` is commi
 │   │   ├── survey/page.tsx            # FR-4 one-question-at-a-time flow
 │   │   ├── results/page.tsx           # FR-5..FR-8
 │   │   ├── not-found.tsx
-│   │   └── api/submissions/route.ts   # FR-9
+│   │   ├── admin/                     # FR-14..FR-16 — session-gated
+│   │   │   ├── login/page.tsx
+│   │   │   ├── page.tsx               # dashboard
+│   │   │   └── submissions/[id]/page.tsx
+│   │   └── api/
+│   │       ├── submissions/route.ts   # FR-9  — POST only, public
+│   │       └── admin/
+│   │           ├── login/route.ts
+│   │           ├── logout/route.ts
+│   │           ├── submissions/route.ts
+│   │           └── export/route.ts
 │   ├── components/
 │   │   ├── ui/{Button,Card,Field,ProgressBar,RadioStatement}.tsx
 │   │   ├── survey/{RespondentForm,QuestionCard,SurveyNav,ReviewPanel}.tsx
 │   │   ├── results/{ScoreHeadline,TierBreakdown,FactorRadar,RecommendationList,StrengthList}.tsx
-│   │   └── pdf/{ResultsPdfDocument.tsx,DownloadPdfButton.tsx}
+│   │   ├── pdf/{ResultsPdfDocument.tsx,DownloadPdfButton.tsx}
+│   │   └── admin/{LoginForm,SummaryStats,SubmissionTable,ExportButtons}.tsx
 │   ├── lib/
 │   │   ├── config/{schema.ts,load.ts}
 │   │   ├── scoring/{engine.ts,recommend.ts,index.ts}
-│   │   ├── storage/{types.ts,blob.ts,fs.ts,index.ts}
+│   │   ├── storage/{types.ts,postgres.ts,fs.ts,index.ts}
+│   │   ├── auth/{session.ts,password.ts,rate-limit.ts}
+│   │   ├── export/csv.ts
 │   │   └── format.ts
 │   ├── store/survey-store.ts
 │   └── types/domain.ts
+├── scripts/migrate.ts                 # creates the submissions table
 ├── tests/
 │   ├── scoring.test.ts
 │   ├── recommend.test.ts
-│   └── config.test.ts
+│   ├── config.test.ts
+│   ├── auth.test.ts
+│   ├── csv.test.ts
+│   └── access-control.test.ts
 ├── data/submissions/                  # dev-only JSON output; gitignored
 └── README.md
 ```
@@ -344,6 +378,34 @@ export interface Recommendation {
 
 ---
 
+### 6.3 Database schema (Postgres)
+
+```sql
+create table if not exists submissions (
+  id             text         primary key,
+  submitted_at   timestamptz  not null default now(),
+  config_version text         not null,
+  overall_score  numeric(6,4) not null,
+  level_value    smallint     not null,
+  payload        jsonb        not null
+);
+
+create index if not exists submissions_submitted_at_idx
+  on submissions (submitted_at desc, id desc);
+```
+
+`payload` holds the §6.1 document verbatim — that is what satisfies *"we will store the data in a
+json format"*. The four scalar columns are denormalised copies of fields inside `payload`, present
+only so the admin dashboard can sort, paginate and aggregate without deserialising every row.
+`payload` remains the source of truth; if the two ever disagree, `payload` wins.
+
+The composite index on `(submitted_at desc, id desc)` is what makes keyset pagination in
+`store.all()` (T-029) stable while new submissions are arriving.
+
+Run `npm run db:migrate` (`scripts/migrate.ts`) to create the table. It must be idempotent.
+
+---
+
 ## 7. Open decisions & assumptions
 
 These are decided so that implementation is never blocked. Each has a safe default and is
@@ -355,9 +417,12 @@ config-driven, so reversing one is cheap. **Flag them to the project owner.**
 | **OD-2** | What are the score→level band thresholds? *(not in source document)* | Equal-width bands over [1,5]: 1.8 / 2.6 / 3.4 / 4.2 | `maturity_levels[].min_score` in `conf.yaml` |
 | **OD-3** | Where does recommendation text come from? *(not in source document)* | Authored in `conf.yaml`, one per factor per level 1–5, phrased as "how to reach the next level". Draft text supplied in T-003 — **owner should review the wording**. | Edit `conf.yaml` |
 | **OD-4** | Is the respondent's name required? | **Optional**, with a consent checkbox before submit. Reduces PII risk and lifts completion rate. | `respondent_fields[].required` in `conf.yaml` |
-| **OD-5** | Storage backend on Vercel | **Vercel Blob** (`@vercel/blob`), one JSON object per submission. Filesystem adapter for local dev. If `BLOB_READ_WRITE_TOKEN` is absent in prod, the API logs the payload and still returns 200 — the user must never lose their result over a storage outage. | Swap `src/lib/storage/index.ts` |
+| **OD-5** | Where do submissions go? | **Neon Postgres** via `DATABASE_URL`, one row per submission, JSON document in a `jsonb` column. Filesystem adapter for local dev. *Revised 2026-08-22:* Vercel Blob was the original choice and is now **rejected** — listing N submissions from blob storage costs N HTTP round-trips, aggregation is impossible without fetching everything, and access control would rest on unguessable URLs rather than on a session. If storage is unreachable the API logs and still returns 200 — the respondent must never lose their result over an outage. | Swap the adapter in `src/lib/storage/index.ts` |
 | **OD-6** | "Product Development" box in the diagram | Treated as a **grouping label** for Research/Design/Development, not a scored factor. There is no 8th question in the source. | Add a factor to `conf.yaml` |
 | **OD-7** | Per-factor level 5 label | Questionnaire says "Advanced", pyramid says "Optimised". **Both kept**, in separate config sections. | `scale_labels` vs `maturity_levels` |
+| **OD-8** | How does the admin authenticate? | **One shared password + an HMAC-signed session cookie** (`jose`, HS256, 8-hour expiry). No accounts, no OAuth, no identity provider — there is one researcher. `ADMIN_PASSWORD` must be ≥12 characters and lives only in Vercel's encrypted environment variables, never in the repo. | Replace `src/lib/auth/` with Auth.js if the study ever needs several named admins with an audit trail |
+| **OD-9** | Retention and PII | Responses are kept for the duration of the study. `respondent.name` is optional (OD-4); nothing else is directly identifying, and no IP address is stored. **The project owner must confirm this matches the ethics approval and the consent wording shown to participants** — that is a research-governance decision, not an engineering one. | `respondent_fields` in `conf.yaml`; add a purge script |
+| **OD-10** | Can the admin delete submissions from the UI? | **Out of scope.** Read and export only. A destructive endpoint sitting behind a single shared password is a poor trade, and accidental deletion of research data is unrecoverable. Deletions are done directly against the database. | Add `DELETE /api/admin/submissions/[id]` with a typed confirmation |
 
 ---
 
@@ -395,9 +460,18 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [ ] **T-019** Recommendations and strengths lists (FR-7)
 
 ### Phase 5 — Persistence
-- [ ] **T-020** Storage adapters (Blob + filesystem) behind one interface
+- [ ] **T-020** Storage adapters (Postgres + filesystem) behind one interface
 - [ ] **T-021** `POST /api/submissions` route (FR-9)
 - [ ] **T-022** Wire submission into the survey completion flow
+
+### Phase 5b — Admin data access *(added 2026-08-22)*
+- [ ] **T-029** Extend the storage layer with read + stream methods
+- [ ] **T-030** Admin session auth primitives (password, session token, rate limit)
+- [ ] **T-031** Middleware gate + login/logout routes (FR-14, FR-17)
+- [ ] **T-032** Admin dashboard — summary stats + paginated submissions (FR-15)
+- [ ] **T-033** Submission detail view (FR-15)
+- [ ] **T-034** CSV / JSON export (FR-16)
+- [ ] **T-035** Access-control audit — prove respondents are locked out (FR-17, NFR-6)
 
 ### Phase 6 — PDF
 - [ ] **T-023** PDF document component (FR-8)
@@ -470,7 +544,7 @@ npm run build && npx tsc --noEmit && npm run lint
 **Do:**
 
 ```bash
-npm install js-yaml zod zustand recharts @react-pdf/renderer @vercel/blob
+npm install js-yaml zod zustand recharts @react-pdf/renderer @neondatabase/serverless jose
 npm install -D vitest @types/js-yaml @vitejs/plugin-react jsdom
 ```
 
@@ -1450,7 +1524,7 @@ npm run test:run && npm run build && npm run lint
 
 ## Phase 5 — Persistence
 
-### T-020 — Storage adapters
+### T-020 — Storage adapters (write path)
 
 **Status:** [ ] pending
 **Depends on:** T-005
@@ -1458,18 +1532,24 @@ npm run test:run && npm run build && npm run lint
 **Do:**
 
 - `src/lib/storage/types.ts` — `export interface SubmissionStore { save(s: Submission): Promise<{ id: string }> }`
+  (T-029 extends this interface with the read methods; do not add them yet.)
 - `src/lib/storage/fs.ts` — writes `data/submissions/<id>.json`, creating the directory. Dev only.
-- `src/lib/storage/blob.ts` — `@vercel/blob` `put(\`submissions/${id}.json\`, …)`, access `'private'`.
-- `src/lib/storage/index.ts` — `getStore()` picks Blob when `BLOB_READ_WRITE_TOKEN` is set,
-  otherwise filesystem. If neither is usable, return a **no-op store that logs and resolves**, so
-  a storage failure can never cost the user their result (OD-5).
+- `src/lib/storage/postgres.ts` — `@neondatabase/serverless`, inserts one row per §6.3.
+- `scripts/migrate.ts` — creates the table and index from §6.3. **Idempotent** (`if not exists`),
+  safe to run on every deploy. `npm i -D tsx`, then add `"db:migrate": "tsx scripts/migrate.ts"`
+  to scripts.
+- `src/lib/storage/index.ts` — `getStore()` returns the Postgres adapter when `DATABASE_URL` is
+  set, otherwise the filesystem adapter. If neither is usable, return a **no-op store that logs
+  and resolves**, so a storage failure can never cost the respondent their result (OD-5).
 
-**Files:** `src/lib/storage/{types,fs,blob,index}.ts`
+**Files:** `src/lib/storage/{types,fs,postgres,index}.ts`, `scripts/migrate.ts`, `package.json`
 
 **Acceptance:**
-- Nothing outside `src/lib/storage/` imports `@vercel/blob` or `node:fs`.
+- Nothing outside `src/lib/storage/` and `scripts/` imports `@neondatabase/serverless` or `node:fs`.
 - `data/submissions/` is gitignored.
-- Adapter selection is a single function that is easy to read.
+- `npm run db:migrate` run twice in a row succeeds both times.
+- Adapter selection is a single, readable function.
+- `DATABASE_URL` is read from the environment only — never hardcoded, never `NEXT_PUBLIC_`.
 
 **Verify:**
 ```bash
@@ -1504,7 +1584,8 @@ npm run typecheck && npm run lint && npm run build
 - Valid POST writes a JSON file locally matching §6.1.
 - Malformed body returns 400 with useful detail.
 - Client-supplied `result` values are ignored and overwritten.
-- `GET /api/submissions` returns 405 — there is deliberately **no read endpoint** (FR-10).
+- `GET /api/submissions` returns 405 — there is deliberately **no public read endpoint** (FR-10).
+  Admin reads live under `/api/admin/*` and are separately authenticated (T-031).
 
 **Verify:**
 ```bash
@@ -1550,7 +1631,406 @@ npm run build && npm run typecheck && npm run lint
 
 ---
 
-## Phase 6 — PDF
+## Phase 5b — Admin data access
+
+> **Threat model for this phase, in one line:** the app is on a public URL, the survey is open to
+> anyone, and the submissions contain names and job titles. The only thing standing between the
+> open internet and that data is what you build here. Treat every shortcut as a leak.
+
+### T-029 — Extend the storage layer with read + stream methods
+
+**Status:** [ ] pending
+**Depends on:** T-020
+
+**Do:**
+
+Extend `src/lib/storage/types.ts`:
+
+```ts
+export interface SubmissionListItem {
+  id: string; submittedAt: string; configVersion: string;
+  designation: string; overallScore: number; levelValue: number; levelName: string;
+}
+export interface ListOptions { limit: number; offset: number; }
+export interface ListResult { items: SubmissionListItem[]; total: number; }
+
+export interface SubmissionStore {
+  save(s: Submission): Promise<{ id: string }>;
+  list(o: ListOptions): Promise<ListResult>;
+  get(id: string): Promise<Submission | null>;
+  all(): AsyncIterable<Submission>;     // export path — MUST stream
+  summary(): Promise<StoreSummary>;
+}
+
+export interface StoreSummary {
+  total: number; last7Days: number; last30Days: number;
+  meanOverallScore: number | null;
+  levelDistribution: Record<1|2|3|4|5, number>;
+  meanByFactor: Record<string, number>;
+}
+```
+
+Implement in both adapters:
+
+- **Postgres** — `list` uses `ORDER BY submitted_at DESC, id DESC LIMIT $1 OFFSET $2` plus a
+  `COUNT(*)`. `summary` is SQL aggregation (`avg`, `count … group by level_value`, and
+  `jsonb` extraction for the per-factor means) — **do not** pull rows into Node to average them.
+  `all()` is an async generator using **keyset** pagination
+  (`WHERE (submitted_at, id) < ($cursor_ts, $cursor_id) ORDER BY … LIMIT 500`), yielding batch by
+  batch. Offset pagination would skip or duplicate rows if a submission arrives mid-export.
+- **Filesystem** — same observable behaviour over `data/submissions/`, reading files lazily in
+  `all()`.
+
+`get` returns `null` for a missing id — it must never throw for "not found", because that is a
+normal 404 path, not an error.
+
+**Files:** `src/lib/storage/{types,fs,postgres}.ts`, `tests/storage.test.ts`
+
+**Acceptance:**
+- `all()` is an async generator. Memory stays flat whether there are 10 rows or 10,000.
+- `all()` uses keyset pagination, not `OFFSET`.
+- Test: seed 250 submissions into the fs adapter, assert `all()` yields exactly 250 with no
+  duplicates, and `list({limit:20,offset:0}).total === 250`.
+- Test: `get('does-not-exist')` resolves to `null`.
+- **These read methods are called only from `src/app/api/admin/*` and `src/app/admin/*`.** No
+  public route and no client component may import them.
+
+**Verify:**
+```bash
+npm run test:run -- tests/storage.test.ts && npm run typecheck && npm run lint
+```
+
+**Notes:**
+
+---
+
+### T-030 — Admin session auth primitives
+
+**Status:** [ ] pending
+**Depends on:** T-002
+
+**Do:**
+
+`src/lib/auth/password.ts` (Node runtime only):
+
+- `verifyAdminPassword(input: string): boolean`
+- Compare against `process.env.ADMIN_PASSWORD` using a **timing-safe** comparison. Hash both sides
+  with SHA-256 first so the buffers are always equal length — `crypto.timingSafeEqual` throws on a
+  length mismatch, and a naive `===` leaks the password length and prefix through timing.
+- Throw at module load if `ADMIN_PASSWORD` is missing or shorter than 12 characters. On a public
+  URL a weak shared password *is* the entire attack surface; failing the build is the correct
+  response.
+
+`src/lib/auth/session.ts` — **must run on Edge**, so use `jose`, never `node:crypto`:
+
+- `createSessionToken(): Promise<string>` — HS256 JWT: `sub: 'admin'`, `iat`, `exp` = now + 8h,
+  signed with `ADMIN_SESSION_SECRET` (reject a secret shorter than 32 bytes).
+- `verifySessionToken(token: string): Promise<boolean>` — verifies signature, expiry, and
+  **pins the algorithm to `HS256`** via `jwtVerify(..., { algorithms: ['HS256'] })`. Without that
+  pin an attacker can present `alg: none` or an algorithm-confusion token.
+- `export const SESSION_COOKIE = 'dm_admin'` and a shared cookie-options object:
+  `{ httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 28800 }`.
+  `httpOnly` is what stops any XSS on the public pages from stealing an admin session.
+
+`src/lib/auth/rate-limit.ts`:
+
+- Fixed-window counter keyed by a SHA-256 hash of the client IP: 5 attempts per 15 minutes, held
+  in a module-level `Map` with expiry sweeping.
+- **Write a comment stating the limitation honestly:** this is per-instance, so on serverless it is
+  best-effort only — it raises the cost of brute force, it does not prevent it. The real defence is
+  the length of `ADMIN_PASSWORD`.
+
+`tests/auth.test.ts` — all of:
+valid token round-trips · expired token rejected · token signed with a different secret rejected ·
+tampered payload rejected · `alg: none` token rejected · `alg: RS256` token rejected ·
+correct password accepted · wrong password rejected · wrong password of the same length rejected.
+
+**Files:** `src/lib/auth/{password,session,rate-limit}.ts`, `tests/auth.test.ts`
+
+**Acceptance:**
+- No password, secret, or token is ever logged, returned in a response body, or included in an
+  error message.
+- `session.ts` imports nothing from `node:*`.
+- Missing or weak env vars fail loudly at startup, not silently at first login.
+- Every test above passes, including the `alg` confusion cases.
+
+**Verify:**
+```bash
+npm run test:run -- tests/auth.test.ts && npm run typecheck && npm run lint
+```
+
+**Notes:**
+
+---
+
+### T-031 — Middleware gate + login/logout (FR-14, FR-17)
+
+**Status:** [ ] pending
+**Depends on:** T-030
+
+**Do:**
+
+`middleware.ts` at the repo root:
+
+```ts
+export const config = { matcher: ['/admin/:path*', '/api/admin/:path*'] };
+```
+
+- Let `/admin/login` and `/api/admin/login` through unauthenticated — otherwise nobody can ever
+  log in. Everything else that matches requires a valid session.
+- Read the `dm_admin` cookie and `verifySessionToken`. On failure:
+  - `/api/admin/*` → `401 { "error": "unauthorized" }`, no other body content
+  - `/admin/*` → redirect to `/admin/login`
+- Set `X-Robots-Tag: noindex, nofollow` on every matched response.
+
+`POST /api/admin/login` (`export const runtime = 'nodejs'`):
+
+- Body `{ password: string }`. Rate-limit **first**, then verify, then set the cookie.
+- Wrong password → `401 { "error": "invalid credentials" }`. The response must be **identical**
+  whether the password was wrong, the body was malformed, or the field was missing — never explain
+  *why* authentication failed.
+- Rate-limited → `429` with a `Retry-After` header.
+- On success, set the session cookie and return `204`. Do not return the token in the body.
+
+`POST /api/admin/logout` — clears the cookie, returns `204`.
+
+`src/app/admin/login/page.tsx` — a minimal password form. `robots: { index: false, follow: false }`
+in its metadata. **Nothing on the public site links to it** — the researcher navigates there
+directly.
+
+**Files:** `middleware.ts`, `src/app/api/admin/{login,logout}/route.ts`,
+`src/app/admin/login/page.tsx`, `src/components/admin/LoginForm.tsx`
+
+**Acceptance:**
+- Unauthenticated `GET /admin` → redirect to `/admin/login`.
+- Unauthenticated `GET /api/admin/submissions` → `401`, and the body contains no submission data.
+- A cookie with a tampered payload is rejected.
+- Six rapid wrong-password attempts: the sixth returns `429`.
+- After a successful login, `GET /admin` returns `200`; after logout it redirects again.
+- No public page anywhere links to `/admin`.
+
+**Verify:**
+```bash
+npm run build
+# with the dev server running:
+curl -sS -o /dev/null -w '%{http_code}\n' localhost:3000/api/admin/submissions          # expect 401
+curl -sS -o /dev/null -w '%{http_code}\n' -L localhost:3000/admin                        # lands on login
+curl -sS -X POST localhost:3000/api/admin/login -H 'content-type: application/json' \
+     -d '{"password":"wrong"}' -o /dev/null -w '%{http_code}\n'                          # expect 401
+curl -sS -X POST localhost:3000/api/admin/login -H 'content-type: application/json' \
+     -d "{\"password\":\"$ADMIN_PASSWORD\"}" -c /tmp/dm.jar -o /dev/null -w '%{http_code}\n'  # expect 204
+curl -sS -b /tmp/dm.jar -o /dev/null -w '%{http_code}\n' localhost:3000/api/admin/submissions # expect 200
+```
+
+**Notes:**
+
+---
+
+### T-032 — Admin dashboard (FR-15)
+
+**Status:** [ ] pending
+**Depends on:** T-031, T-029
+
+**Do:** `src/app/admin/page.tsx` — server component, `export const dynamic = 'force-dynamic'`.
+
+- **Check the session again, server-side, in the page itself.** The middleware is a convenience,
+  not the only gate (NFR-6). If the matcher is ever misconfigured or a future Next.js version
+  changes matching behaviour, this page must still refuse.
+- `SummaryStats` — from `store.summary()`: total submissions, last 7 and 30 days, mean overall
+  score, level distribution (count per level 1–5), and mean answer per factor. Rendered as text
+  and a small bar per level, reusing the `--level-N` tokens.
+- `SubmissionTable` — 25 per page, columns: submitted date, designation, years in digitalisation,
+  overall score, level. Each row links to `/admin/submissions/[id]`.
+- Pagination via a `?page=` search param.
+- `ExportButtons` (CSV / JSON) — wired in T-034.
+- A logout button posting to `/api/admin/logout`.
+- An empty state for when no submissions exist yet — the researcher will hit this on day one, and
+  it must read as "nothing yet", not as "something broke".
+
+**Files:** `src/app/admin/page.tsx`,
+`src/components/admin/{SummaryStats,SubmissionTable,ExportButtons}.tsx`
+
+**Acceptance:**
+- `dynamic = 'force-dynamic'` — the page is never statically cached with real data baked in.
+- An explicit server-side session check exists **in addition to** the middleware.
+- Respondent **names are not shown in the table** — designation only. Names appear only on the
+  detail page (T-033). This keeps a shoulder-surfed dashboard from exposing every participant.
+- Aggregates come from `store.summary()`, not from fetching all rows into the page.
+- The wide table sits in its own `overflow-x: auto` container.
+
+**Verify:**
+```bash
+npm run build && npm run typecheck && npm run lint
+```
+
+**Notes:**
+
+---
+
+### T-033 — Submission detail view (FR-15)
+
+**Status:** [ ] pending
+**Depends on:** T-032
+
+**Do:** `src/app/admin/submissions/[id]/page.tsx` — server component, `force-dynamic`.
+
+- Server-side session check, same as T-032.
+- Show: the full respondent record (including name, if given), every factor with the answer value,
+  its scale label, and the full statement text the respondent chose; tier scores; overall score;
+  resolved maturity level; and the submission metadata (`submittedAt`, `configVersion`,
+  `durationMs`, user agent).
+- **Recompute the score from the stored answers** and compare against the stored `result`. If they
+  differ, show a clear warning naming the `configVersion` the response was collected under — a
+  mismatch means `conf.yaml` changed after this response was recorded, which matters a great deal
+  when the numbers end up in a dissertation.
+- Unknown id → `notFound()`.
+- A "back to dashboard" link.
+
+**Files:** `src/app/admin/submissions/[id]/page.tsx`
+
+**Acceptance:**
+- Statement text is resolved through the config, not stored per-submission.
+- The config-drift warning triggers: test it by editing a weight in `conf.yaml` and reloading a
+  detail page for an existing submission.
+- Unknown id returns a real 404, not a crash and not an empty page.
+
+**Verify:**
+```bash
+npm run build && npm run typecheck && npm run lint
+```
+
+**Notes:**
+
+---
+
+### T-034 — CSV / JSON export (FR-16)
+
+**Status:** [ ] pending
+**Depends on:** T-032
+
+**Do:**
+
+`src/lib/export/csv.ts`:
+
+- `toCsvRow(values: string[]): string` — RFC 4180 quoting: wrap in `"` when the value contains a
+  comma, a quote, `\n` or `\r`, and escape embedded quotes by doubling them.
+- **CSV injection defence.** Any cell whose first character is `=`, `+`, `-`, `@`, tab or carriage
+  return gets prefixed with a single quote. Respondents type free text into `name` and
+  `designation`, and the researcher will open this file in Excel — `=HYPERLINK(...)` in a
+  designation field is the one genuinely exploitable hole in an otherwise read-only feature.
+- `buildHeader(config)` and `submissionToFlatRow(config, submission)` — one row per submission:
+  `id`, `submittedAt`, `configVersion`, each respondent field, each factor answer (column per
+  factor), each tier score, `overallScore`, `levelValue`, `levelName`.
+  **Column order is derived from `conf.yaml`**, so adding a factor adds a column with no code change.
+
+`GET /api/admin/export?format=csv|json` (`runtime = 'nodejs'`):
+
+- Session-checked by middleware **and** explicitly in the handler.
+- Streams the response with a `ReadableStream` fed by `store.all()`. Never build the whole file in
+  memory — a serverless function has a hard memory ceiling and the researcher may export
+  everything at once.
+- `Content-Disposition: attachment; filename="dm-submissions-YYYY-MM-DD.csv"`.
+- CSV: `Content-Type: text/csv; charset=utf-8`, and emit a **UTF-8 BOM** first so Excel renders
+  accented characters correctly.
+- JSON: streams a JSON array of the full §6.1 documents.
+- An unknown `format` → `400`.
+
+`tests/csv.test.ts`:
+- fields containing `,`, `"`, and `\n` are quoted and escaped correctly
+- `=HYPERLINK("http://evil")`, `+1+1`, `-1+1`, `@SUM(A1)` are all neutralised
+- header row matches the config's factor order
+- adding a factor to a fixture config adds exactly one column, in the right position
+- a `null` / missing optional `name` produces an empty cell, not `"undefined"`
+
+**Files:** `src/lib/export/csv.ts`, `src/app/api/admin/export/route.ts`, `tests/csv.test.ts`
+
+**Acceptance:**
+- Exporting 1,000 submissions does not load them all into memory (verify by reading the code path,
+  and by seeding the fs adapter and watching it stream).
+- Opening the exported CSV in a spreadsheet executes nothing.
+- An unauthenticated export request returns `401` and no data.
+- The CSV opens cleanly in Excel with correct encoding.
+
+**Verify:**
+```bash
+npm run test:run -- tests/csv.test.ts && npm run build
+# authenticated (reusing the cookie jar from T-031):
+curl -sS -b /tmp/dm.jar 'localhost:3000/api/admin/export?format=csv' | head -3
+curl -sS -o /dev/null -w '%{http_code}\n' 'localhost:3000/api/admin/export?format=csv'  # expect 401
+```
+
+**Notes:**
+
+---
+
+### T-035 — Access-control audit (FR-17, NFR-6)
+
+**Status:** [ ] pending
+**Depends on:** T-034
+
+This task exists because "users should not be able to access this" is a requirement, and a
+requirement you have not tested is a requirement you have not met.
+
+**Do:**
+
+Write `tests/access-control.test.ts` as a table test against a running production build. For an
+**unauthenticated** client, assert every route's status exactly:
+
+| Route | Method | Expected |
+|---|---|---|
+| `/` | GET | 200 |
+| `/model` | GET | 200 |
+| `/survey` | GET | 200 |
+| `/results` | GET | 200 |
+| `/api/submissions` | POST | 200 |
+| `/api/submissions` | GET | 405 |
+| `/admin` | GET | 307 → `/admin/login` |
+| `/admin/login` | GET | 200 |
+| `/admin/submissions/whatever` | GET | 307 → `/admin/login` |
+| `/api/admin/submissions` | GET | 401 |
+| `/api/admin/export?format=csv` | GET | 401 |
+| `/api/admin/export?format=json` | GET | 401 |
+| `/api/admin/logout` | POST | 401 |
+
+Then repeat with a valid session and assert the admin routes return 200/204 while the public
+routes still behave.
+
+Also assert, for the unauthenticated responses, that **no response body contains a known seeded
+respondent name** — status codes alone do not prove data did not leak.
+
+Then complete the manual sweep:
+
+- `public/robots.txt` — `Disallow: /admin` and `Disallow: /api/admin`.
+- `robots: { index: false, follow: false }` metadata on every admin page.
+- Security headers in `next.config.ts`: `X-Content-Type-Options: nosniff`,
+  `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`.
+- **No secret reaches the browser:**
+  `! grep -rq "ADMIN_PASSWORD\|ADMIN_SESSION_SECRET\|DATABASE_URL" .next/static/`
+- No `NEXT_PUBLIC_*` variable holds anything admin- or database-related.
+- No file under `src/app/(public routes)`, and no client component, imports from
+  `src/lib/auth/` or calls `store.list/get/all/summary`.
+
+**Files:** `tests/access-control.test.ts`, `public/robots.txt`, `next.config.ts`
+
+**Acceptance:**
+- Every row of the table passes, unauthenticated and authenticated.
+- No seeded respondent name appears in any unauthenticated response body.
+- No secret appears anywhere in `.next/static/`.
+- The import-boundary grep comes back clean.
+
+**Verify:**
+```bash
+npm run build
+npm run test:run -- tests/access-control.test.ts
+! grep -rq "ADMIN_PASSWORD\|ADMIN_SESSION_SECRET\|DATABASE_URL" .next/static/ && echo "no secrets in client bundle"
+grep -rn "lib/auth" src/components src/app --include=*.tsx | grep -v "app/admin" || echo "no public->auth imports"
+```
+
+**Notes:**
+
+---
+
+
 
 ### T-023 — PDF document component (FR-8)
 
@@ -1640,6 +2120,8 @@ npm run lint
 - Every form control has a label; every error is associated via `aria-describedby`.
 - `prefers-reduced-motion` respected by any transition.
 - Charts have text equivalents (done in T-018 — verify it survived).
+- **Admin pages too** — the login form needs a labelled password field and a proper error
+  association; the submissions table is wide and needs its own `overflow-x: auto` container.
 
 **Files:** across the app
 
@@ -1701,18 +2183,37 @@ npm run build && npm run lint
   to 1), and change the maturity bands. Point out that `npm run build` fails loudly on a bad
   config, which is the safety net.
 - How scoring works, with the §3.6 worked example.
-- Deployment: import the repo into Vercel, set `BLOB_READ_WRITE_TOKEN`, deploy.
-- Where submissions land and how to export them for analysis.
-- The open decisions from §7 that the project owner still needs to confirm.
+- Deployment: import the repo into Vercel, attach a Neon Postgres database, set the environment
+  variables below, run `npm run db:migrate`, deploy.
+- **"Getting your data out"** — the section the researcher will actually use. Go to `/admin`
+  (not linked from anywhere), log in with `ADMIN_PASSWORD`, review the dashboard, click
+  *Export CSV*. Note that the CSV has one row per respondent and one column per factor, ready to
+  drop into SPSS, R, or Excel. Mention that `/admin` is deliberately unlinked and `noindex`.
+- **Admin password guidance** — must be ≥12 characters, set only in Vercel's environment
+  variables, never committed, and changed if it is ever shared. Explain that changing
+  `ADMIN_SESSION_SECRET` immediately logs out any existing session, which is the way to revoke
+  access.
+- The open decisions from §7 that the project owner still needs to confirm — especially **OD-9**
+  (retention and PII), which needs to line up with the study's ethics approval.
 
-Also add `.env.example` documenting `BLOB_READ_WRITE_TOKEN`.
+Also add `.env.example` documenting, with comments and no real values:
+
+```
+DATABASE_URL=            # Neon Postgres connection string
+ADMIN_PASSWORD=          # >= 12 chars; admin login for /admin
+ADMIN_SESSION_SECRET=    # >= 32 random bytes; rotating this revokes all sessions
+```
+
+Confirm `.env*` (except `.env.example`) is gitignored.
 
 **Files:** `README.md`, `.env.example`
 
 **Acceptance:**
 - A reader who is not a developer can change a question and a weight from the README alone.
-- No secrets in the repo.
-- Deploy to Vercel succeeds and the full flow works on the deployed URL.
+- A reader who is not a developer can retrieve the collected data from the README alone.
+- No secrets in the repo; `.env.example` contains placeholders only.
+- Deploy to Vercel succeeds, the full respondent flow works on the deployed URL, and `/admin`
+  is reachable with the password and refuses without it.
 
 **Verify:**
 ```bash
@@ -1732,6 +2233,10 @@ npm run build && npm run test:run
 
 `e2e/happy-path.spec.ts`: landing → start → fill respondent form → answer all 7 → review →
 results → assert the score text is present → click download and assert a PDF download event.
+
+`e2e/admin.spec.ts`: unauthenticated `/admin` redirects to the login page → log in → the
+submission just created by the happy-path test is visible in the table → open its detail page →
+export CSV and assert the downloaded file contains that submission's id.
 
 Add `"test:e2e": "playwright test"`.
 
@@ -1767,11 +2272,17 @@ npm run build && npm run test:e2e
 | FR-11 general information | T-013 | [ ] |
 | FR-12 maturity level | T-006, T-017 | [ ] |
 | FR-13 Vercel deployment | T-027 | [ ] |
+| FR-14 admin authentication | T-030, T-031 | [ ] |
+| FR-15 admin list, view, statistics | T-029, T-032, T-033 | [ ] |
+| FR-16 CSV / JSON export | T-034 | [ ] |
+| FR-17 respondents locked out of admin | T-031, T-035 | [ ] |
 | NFR-1 responsive | T-025 | [ ] |
 | NFR-2 accessibility | T-025 | [ ] |
 | NFR-3 engine tests | T-006, T-007 | [ ] |
 | NFR-4 config-only changes | T-004, T-010, T-015 | [ ] |
 | NFR-5 refresh-safe progress | T-012 | [ ] |
+| NFR-6 two-layer admin gate | T-031, T-032, T-035 | [ ] |
+| NFR-7 streaming export | T-029, T-034 | [ ] |
 
 ---
 
