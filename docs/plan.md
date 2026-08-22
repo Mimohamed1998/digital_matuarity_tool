@@ -2379,30 +2379,30 @@ npm run build && npm run test:e2e
 
 | Requirement | Delivered by | Verified |
 |---|---|---|
-| FR-1 landing page | T-010 | [ ] |
-| FR-2 static theory page | T-011 | [ ] |
-| FR-3 conf.yaml drives everything | T-003, T-004 | [ ] |
-| FR-4 one question at a time | T-015 | [ ] |
-| FR-5 review submitted answers | T-016 | [ ] |
-| FR-6 final score | T-006, T-017 | [ ] |
-| FR-7 recommendations | T-007, T-019 | [ ] |
-| FR-8 PDF download | T-023, T-024 | [ ] |
-| FR-9 JSON storage | T-020, T-021 | [ ] |
-| FR-10 no retrieval | T-012 (sessionStorage), T-021 (no GET) | [ ] |
-| FR-11 general information | T-013 | [ ] |
-| FR-12 maturity level | T-006, T-017 | [ ] |
-| FR-13 Vercel deployment | T-027 | [ ] |
-| FR-14 admin authentication | T-030, T-031 | [ ] |
-| FR-15 admin list, view, statistics | T-029, T-032, T-033 | [ ] |
-| FR-16 CSV / JSON export | T-034 | [ ] |
-| FR-17 respondents locked out of admin | T-031, T-035 | [ ] |
-| NFR-1 responsive | T-025 | [ ] |
-| NFR-2 accessibility | T-025 | [ ] |
-| NFR-3 engine tests | T-006, T-007 | [ ] |
-| NFR-4 config-only changes | T-004, T-010, T-015 | [ ] |
-| NFR-5 refresh-safe progress | T-012 | [ ] |
-| NFR-6 two-layer admin gate | T-031, T-032, T-035 | [ ] |
-| NFR-7 streaming export | T-029, T-034 | [ ] |
+| FR-1 landing page | T-010 | [x] |
+| FR-2 static theory page | T-011 | [x] |
+| FR-3 conf.yaml drives everything | T-003, T-004 | [x] |
+| FR-4 one question at a time | T-015 | [x] |
+| FR-5 review submitted answers | T-016 | [x] |
+| FR-6 final score | T-006, T-017 | [x] |
+| FR-7 recommendations | T-007, T-019 | [x] |
+| FR-8 PDF download | T-023, T-024 | [x] |
+| FR-9 JSON storage | T-020, T-021 | [x] |
+| FR-10 no retrieval | T-012 (sessionStorage), T-021 (no GET) | [x] |
+| FR-11 general information | T-013 | [x] |
+| FR-12 maturity level | T-006, T-017 | [x] |
+| FR-13 Vercel deployment | T-027 | [~] deploy pending |
+| FR-14 admin authentication | T-030, T-031 | [x] |
+| FR-15 admin list, view, statistics | T-029, T-032, T-033 | [x] |
+| FR-16 CSV / JSON export | T-034 | [x] |
+| FR-17 respondents locked out of admin | T-031, T-035 | [x] |
+| NFR-1 responsive | T-025 | [x] |
+| NFR-2 accessibility | T-025 | [x] |
+| NFR-3 engine tests | T-006, T-007 | [x] |
+| NFR-4 config-only changes | T-004, T-010, T-015 | [x] proven by adding an 8th factor |
+| NFR-5 refresh-safe progress | T-012 | [x] |
+| NFR-6 two-layer admin gate | T-031, T-032, T-035 | [x] |
+| NFR-7 streaming export | T-029, T-034 | [x] |
 
 ---
 
