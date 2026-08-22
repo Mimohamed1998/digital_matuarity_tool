@@ -257,7 +257,7 @@ Node 20+. Package manager: **npm** (keep it boring; `package-lock.json` is commi
 ```
 .
 ├── conf.yaml                          # THE survey configuration — single source of truth
-├── middleware.ts                      # gates /admin/* and /api/admin/*
+├── src/middleware.ts                  # gates /admin/* and /api/admin/* (see T-031 Notes)
 ├── docs/
 │   ├── plan.md                        # this file
 │   ├── requirements-extract.md
@@ -1894,6 +1894,7 @@ curl -sS -b /tmp/dm.jar -o /dev/null -w '%{http_code}\n' localhost:3000/api/admi
 - All four login failure modes — wrong password, non-JSON body, missing field, wrong field type — return byte-identical 401s, checked side by side from a fresh client IP.
 - Added `src/lib/auth/guard.ts` (`hasAdminSession()`) as the shared second gate, and a placeholder `src/app/admin/page.tsx` that already uses it; T-032 fills in the dashboard.
 - No public page, layout or component links to /admin — grepped.
+- CORRECTION (found on first Vercel deploy): the plan places `middleware.ts` at the repo root, and it builds and passes every local test there — but Vercel's Edge packaging rejects it with `The Edge Function "middleware" is referencing unsupported modules: @/lib/auth/session`. Two changes: the file moved to `src/middleware.ts` (where Next.js looks when the project uses a src directory), and its import of the session module is now RELATIVE rather than the `@/` alias, because Vercel's Edge bundler resolves from the built output rather than through tsconfig `paths`. Local behaviour is unchanged — all 32 access-control assertions and the 6 browser tests still pass.
 
 ---
 

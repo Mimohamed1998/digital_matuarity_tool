@@ -257,7 +257,7 @@ tool rather than taken from the source document, so the wording is yours to corr
 
 ```
 conf.yaml                  the survey — questions, weights, levels, recommendations
-middleware.ts              blocks /admin and /api/admin without a valid session
+src/middleware.ts          blocks /admin and /api/admin without a valid session
 src/lib/config/            reads and validates conf.yaml (fails the build on a bad one)
 src/lib/scoring/           the scoring and recommendation engines — pure functions, no UI
 src/lib/storage/           Postgres and filesystem adapters behind one interface

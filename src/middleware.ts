@@ -1,5 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { SESSION_COOKIE, verifySessionToken } from '@/lib/auth/session';
+// Relative, not the `@/` alias, and deliberately so. This is the one module that gets
+// compiled into an Edge Function, and Vercel's Edge bundler resolves imports from the
+// built output rather than through tsconfig `paths` — a tsconfig alias here fails there
+// with "referencing unsupported modules" while building perfectly well locally.
+// This file must also live under src/, which is where Next.js looks for middleware when
+// the project uses a src directory.
+import { SESSION_COOKIE, verifySessionToken } from './lib/auth/session';
 
 /**
  * Deny-by-default gate for every admin surface (FR-14, FR-17).
