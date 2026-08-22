@@ -439,7 +439,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-004** Config schema (zod) + loader
 - [x] **T-005** Domain types
 - [x] **T-006** Scoring engine + unit tests
-- [ ] **T-007** Recommendation engine + unit tests
+- [x] **T-007** Recommendation engine + unit tests
 
 ### Phase 2 — App shell
 - [ ] **T-008** Root layout, design tokens, global styles (light + dark)
@@ -1074,7 +1074,7 @@ npm run test:run -- tests/scoring.test.ts && npm run typecheck && npm run lint
 
 ### T-007 — Recommendation engine + unit tests
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-006
 
 **Do:**
@@ -1115,6 +1115,7 @@ npm run test:run && npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- Ties are compared with a 1e-12 epsilon before falling through to tier-then-factor order. Without it, two factors that are equal in principle differ in the last bits of the float and the documented tie-break would never actually run.
 
 ---
 
