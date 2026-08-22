@@ -433,7 +433,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 ### Phase 0 — Foundation
 - [x] **T-001** Scaffold the Next.js + TypeScript + Tailwind project
 - [x] **T-002** Install dependencies and wire up tooling (Vitest, lint, scripts)
-- [ ] **T-003** Author `conf.yaml` — the complete survey configuration
+- [x] **T-003** Author `conf.yaml` — the complete survey configuration
 
 ### Phase 1 — Domain core (pure, testable, no UI)
 - [ ] **T-004** Config schema (zod) + loader
@@ -594,7 +594,7 @@ npm run test:run && npm run typecheck && npm run lint && npm run build
 
 ### T-003 — Author `conf.yaml`
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-002 *(the verify command below needs `js-yaml` installed)*
 
 This is the most important file in the project. Create `conf.yaml` in the **repo root** with
@@ -928,6 +928,7 @@ console.log('conf.yaml OK');"
 ```
 
 **Notes:**
+- Transcribed verbatim from the plan. Every question and all 35 statements were then diffed programmatically against `docs/requirements-extract.md` and match word for word. Recommendation text is the draft from OD-3 and still needs the project owner's review.
 
 ---
 

@@ -1,0 +1,300 @@
+# =============================================================================
+# Digital Maturity Model — Apparel Industry
+# Single source of truth for all survey content, weights and scoring.
+# Changing this file alone must be enough to add/remove factors or tiers.
+# =============================================================================
+
+meta:
+  version: "1.0.0"
+  title: "Digital Maturity Assessment"
+  subtitle: "A digital maturity model for the apparel industry"
+  intro: >-
+    This study addresses the lack of a practical tool to quantify digital maturity in the
+    apparel industry. The primary aim of the research is to develop a data-driven framework
+    to measure digital maturity and demonstrate the potential advantages of digital
+    transformation. This framework will support apparel manufacturers in transitioning
+    toward sustainable, technology-driven business models.
+  instructions: >-
+    For each factor, select one statement (1-5) that best describes the current situation
+    in your organisation.
+  estimated_minutes: 5
+
+scoring:
+  formula: weighted_sum      # see docs/plan.md OD-1
+  min_answer: 1
+  max_answer: 5
+  decimals: 2
+
+# Answer-scale labels (note: level 5 here is "Advanced" per the questionnaire,
+# while the overall maturity band at 5 is "Optimised" per the pyramid figure — OD-7)
+scale_labels:
+  1: "Initial"
+  2: "Emerging"
+  3: "Developing"
+  4: "Established"
+  5: "Advanced"
+
+respondent_fields:
+  - id: name
+    label: "Name"
+    type: text
+    required: false
+    help: "Optional. Leave blank if you prefer to respond anonymously."
+  - id: designation
+    label: "Designation"
+    type: text
+    required: true
+  - id: experienceTechnicalYears
+    label: "Years of technical experience"
+    type: number
+    required: true
+    min: 0
+    max: 60
+  - id: experienceManagerialYears
+    label: "Years of managerial experience"
+    type: number
+    required: true
+    min: 0
+    max: 60
+  - id: experienceDigitalisationYears
+    label: "Years of experience in digitalisation"
+    type: number
+    required: true
+    min: 0
+    max: 60
+  - id: highestQualification
+    label: "Highest level of academic qualification"
+    type: select
+    required: true
+    options:
+      - { value: "secondary",  label: "Secondary / High school" }
+      - { value: "diploma",    label: "Diploma" }
+      - { value: "bachelors",  label: "Bachelor's degree" }
+      - { value: "masters",    label: "Master's degree" }
+      - { value: "doctorate",  label: "Doctorate" }
+      - { value: "other",      label: "Other" }
+
+tiers:
+  - id: organisational_enablers
+    name: "Organisational Enablers"
+    label: "Tier 1"
+    weight: 0.7
+    description: >-
+      The leadership, strategy, people and technology foundations that make digital
+      transformation possible.
+
+  - id: core_operations
+    name: "Core Operations"
+    label: "Tier 2"
+    weight: 0.3
+    description: >-
+      How digitally mature the product development value chain is, from research through
+      design to development.
+
+factors:
+  # --------------------------------------------------------------- Tier 1 ---
+  - id: leadership
+    tier: organisational_enablers
+    name: "Leadership"
+    weight: 0.383
+    question: "To what extent does management support and drive digital transformation?"
+    statements:
+      1: "Management provides little or no direction for digital transformation."
+      2: "Management supports some digital initiatives when needed."
+      3: "Management has a clear digital vision and supports selected digital initiatives."
+      4: "Management actively drives digital transformation, provides resources, and monitors progress."
+      5: "Management continuously drives digital transformation, uses digital information for decision-making, and actively leads organisational change."
+    recommendations:
+      1: "Appoint a named senior sponsor for digital transformation and put a standing digital item on the management agenda, so that direction exists at all."
+      2: "Move from reacting to individual requests to stating a digital vision: agree what digital should achieve for the business over the next 2-3 years and communicate it."
+      3: "Back the vision with commitment - assign budget and named owners to your selected initiatives, and review their progress on a fixed cadence."
+      4: "Start using digital information in the decisions management already makes, and have leaders visibly lead change rather than sponsor it from a distance."
+      5: "Sustain this. Keep leadership attention on emerging technologies and continue using data as the default basis for decisions."
+
+  - id: strategy_governance
+    tier: organisational_enablers
+    name: "Strategy & Governance"
+    weight: 0.367
+    question: "To what extent is digital transformation formally planned and managed in the organisation?"
+    statements:
+      1: "There is no formal digital strategy, roadmap, or governance structure."
+      2: "Digital initiatives are planned individually with limited formal guidance."
+      3: "The organisation has some digital priorities, policies, and governance practices."
+      4: "Digital transformation is guided by a formal strategy, roadmap, governance structure, and regular reviews."
+      5: "Digital strategy and governance are continuously reviewed and improved based on performance, risks, and emerging technologies."
+    recommendations:
+      1: "Write a first digital roadmap, even a one-page one: current state, three priorities, and who owns each. A rough plan beats no plan."
+      2: "Replace project-by-project planning with a shared prioritisation method, so initiatives are chosen against agreed criteria rather than in isolation."
+      3: "Consolidate your scattered priorities and policies into one formal strategy with a roadmap, a governance forum, and a regular review cycle."
+      4: "Close the loop: feed performance data, delivery risks and technology scanning back into the strategy so it is revised rather than merely reported against."
+      5: "Sustain this. Keep the review cycle honest by acting on what it surfaces, including stopping initiatives that are not working."
+
+  - id: people_culture
+    tier: organisational_enablers
+    name: "People & Culture"
+    weight: 0.190
+    question: "To what extent are employees prepared and encouraged to support digital transformation?"
+    statements:
+      1: "Employees have limited digital skills and there is significant resistance to digital change."
+      2: "Basic digital training is provided to selected employees."
+      3: "Employees receive regular digital training and participate in some digital initiatives."
+      4: "Continuous learning, employee participation, and cross-functional collaboration are well established."
+      5: "Employees actively identify digital opportunities, develop new digital skills, and contribute to digital innovation."
+    recommendations:
+      1: "Run a digital skills baseline across roles, then address the resistance directly - most of it is fear of redundancy or of looking incompetent. Start training with the willing."
+      2: "Widen training beyond the selected few and set a regular cadence, so digital skills stop being concentrated in a handful of people."
+      3: "Move people from attending initiatives to shaping them: build cross-functional teams and make continuous learning an expectation, not an event."
+      4: "Create channels through which employees can propose digital improvements, and make sure good proposals visibly get resourced."
+      5: "Sustain this. Protect the time and psychological safety that let employees keep experimenting."
+
+  - id: technology
+    tier: organisational_enablers
+    name: "Technology"
+    weight: 0.060
+    question: "To what extent are digital technologies and systems used and integrated across the organisation?"
+    statements:
+      1: "Digital technologies are limited and mainly used for basic activities."
+      2: "Some departments use digital tools, but systems are mostly separate."
+      3: "Digital systems are used across several functions with some level of integration."
+      4: "Digital systems are well integrated and data is shared across relevant functions."
+      5: "The organisation continuously integrates and improves its digital technologies using advanced analytics, AI, automation, and emerging technologies."
+    recommendations:
+      1: "Identify the two or three highest-volume manual processes and digitise those first. Do not attempt a platform-wide programme from this starting point."
+      2: "Tackle the silos: agree a master data definition and connect the two systems that most often need the same information re-keyed."
+      3: "Extend integration to the remaining functions and make shared data the default rather than an export-on-request."
+      4: "Build on your integrated data with analytics and automation, and set up a way to evaluate emerging technologies rather than adopting them ad hoc."
+      5: "Sustain this. Keep retiring what no longer earns its place - integration debt accumulates quietly."
+
+  # --------------------------------------------------------------- Tier 2 ---
+  - id: research
+    tier: core_operations
+    name: "Research"
+    weight: 0.40
+    question: "To what extent are digital technologies and data used for product-related research?"
+    statements:
+      1: "Research is mainly conducted using traditional methods with little use of digital tools."
+      2: "Digital platforms or databases are occasionally used for research."
+      3: "Digital platforms and data are regularly used to support market, customer, and trend research."
+      4: "Digital analytics and advanced tools are systematically used to identify trends, customer needs, and product opportunities."
+      5: "AI, predictive analytics, and integrated data are continuously used to predict trends, customer preferences, and future product opportunities."
+    recommendations:
+      1: "Subscribe to at least one digital trend or market intelligence source and make consulting it a required step in the research process."
+      2: "Make digital research routine rather than occasional by defining which sources are consulted at which stage of every new development."
+      3: "Move from supporting decisions to systematically driving them: adopt analytics tooling and define the metrics that signal a real customer need."
+      4: "Add predictive capability - connect your research, sales and returns data so the organisation can anticipate demand rather than describe it after the fact."
+      5: "Sustain this. Keep validating model predictions against outcomes so confidence stays earned."
+
+  - id: design
+    tier: core_operations
+    name: "Design"
+    weight: 0.23
+    question: "To what extent are digital technologies used in the product design process?"
+    statements:
+      1: "Product design is mainly conducted using traditional methods."
+      2: "Basic digital design tools are used by selected employees or departments."
+      3: "Digital design and visualisation tools are regularly used, with some digital collaboration."
+      4: "Digital design, visualisation, file sharing, and collaboration are integrated into the design process."
+      5: "Advanced digital technologies such as 3D, AI, and virtual tools are continuously used for design optimisation, collaboration, and innovation."
+    recommendations:
+      1: "Introduce digital design tooling for one product category as a pilot, and train the designers who will champion it rather than the whole team at once."
+      2: "Extend the tools beyond the early adopters and standardise file formats and naming, so digital design output can actually be shared."
+      3: "Integrate design into a single collaborative environment so visualisation, file sharing and review stop being separate manual steps."
+      4: "Adopt 3D and virtual sampling to cut physical sample rounds, and use design data to optimise, not just to draw."
+      5: "Sustain this. Keep measuring the sample rounds and lead time you are saving, so the investment stays defensible."
+
+  - id: development
+    tier: core_operations
+    name: "Development"
+    weight: 0.37
+    question: "To what extent are digital technologies used to manage and improve product development?"
+    statements:
+      1: "Product development is mainly conducted through physical and manual processes."
+      2: "Individual digital tools are used for activities such as pattern development, sampling, or fit evaluation."
+      3: "Digital tools are regularly used for pattern development, 3D sampling, fit evaluation, or digital approval."
+      4: "Digital tools, simulation, digital workflows, and integrated systems are used throughout product development."
+      5: "Integrated systems, AI, analytics, simulation, and digital twins are used to continuously optimise product development and reduce time, cost, and physical sampling."
+    recommendations:
+      1: "Digitise one development stage end to end - pattern development is usually the highest-return starting point - before broadening."
+      2: "Connect your individual tools into a sequence so output from one stage feeds the next without re-work."
+      3: "Extend digital approval across the full development calendar and integrate it with the systems that carry the order through."
+      4: "Introduce simulation and digital twins to test fit and performance before physical sampling, and measure the reduction in sample rounds."
+      5: "Sustain this. Feed production and quality outcomes back into the models so optimisation keeps improving."
+
+# Score -> maturity band. min_score is INCLUSIVE. Bands must be contiguous and
+# cover the full [1, 5] range. See docs/plan.md OD-2 - these thresholds are an
+# assumption and are open for the project owner to revise.
+maturity_levels:
+  - value: 1
+    min_score: 1.0
+    name: "Initial"
+    subtitle: "Manual & Siloed"
+    headline: "Digital is Minimal - Traditional"
+    colour: "#B0392E"
+    description: >-
+      The organisation relies on manual processes and disconnected systems.
+      Digital transformation is not a priority.
+    characteristics:
+      - "Manual processes and paper-based work"
+      - "Limited or no digital tools"
+      - "No structured data management"
+      - "Low digital awareness and skills"
+
+  - value: 2
+    min_score: 1.8
+    name: "Emerging"
+    subtitle: "Ad Hoc & Reactive"
+    headline: "Digital is Emerging - Opportunity Driven"
+    colour: "#C9962F"
+    description: >-
+      Digital awareness exists and some initiatives are in place, but implementation
+      is inconsistent and mostly isolated.
+    characteristics:
+      - "Limited use of digital tools"
+      - "Unstructured initiatives"
+      - "Limited data usage"
+      - "Skills and change management in progress"
+
+  - value: 3
+    min_score: 2.6
+    name: "Developing"
+    subtitle: "Structured & Consistent"
+    headline: "Digital is Implemented - Value Focused"
+    colour: "#2E7E8C"
+    description: >-
+      Digital initiatives are implemented across key areas with defined processes.
+      The organisation is building consistency and capability.
+    characteristics:
+      - "Digital tools used across key functions"
+      - "Defined processes and policies"
+      - "Data used for decision-making"
+      - "Growing digital culture and skills"
+
+  - value: 4
+    min_score: 3.4
+    name: "Established"
+    subtitle: "Managed & Integrated"
+    headline: "Digital is Integrated - Performance Driven"
+    colour: "#8DA84A"
+    description: >-
+      Digital technologies and processes are fully integrated across functions.
+      The organisation manages and measures digital performance.
+    characteristics:
+      - "Integrated digital systems and data"
+      - "Standardised processes and governance"
+      - "Measurable impact and ROI"
+      - "Strong digital skills and collaboration"
+
+  - value: 5
+    min_score: 4.2
+    name: "Optimised"
+    subtitle: "Innovation Leader"
+    headline: "Digital at the Core - Continuous Innovation"
+    colour: "#2E6B3A"
+    description: >-
+      Digital transformation is embedded in the culture. The organisation continuously
+      innovates, adapts and creates new value through digital technologies.
+    characteristics:
+      - "Data-driven decisions at all levels"
+      - "Advanced analytics, AI and automation"
+      - "Ecosystem collaboration and co-creation"
+      - "Continuous improvement and innovation"
