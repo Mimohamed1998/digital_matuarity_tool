@@ -437,7 +437,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 
 ### Phase 1 — Domain core (pure, testable, no UI)
 - [x] **T-004** Config schema (zod) + loader
-- [ ] **T-005** Domain types
+- [x] **T-005** Domain types
 - [ ] **T-006** Scoring engine + unit tests
 - [ ] **T-007** Recommendation engine + unit tests
 
@@ -990,7 +990,7 @@ npm run test:run -- tests/config.test.ts && npm run typecheck
 
 ### T-005 — Domain types
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-004
 
 **Do:** Create `src/types/domain.ts` with exactly the types listed in §6.2 of this plan. Add
@@ -1008,6 +1008,8 @@ npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- Added `StoredResult` and `SubmissionMeta` alongside the §6.2 types, so the §6.1 storage document (which holds tier scores as a plain id→number map, not the richer `TierScore[]`) has a name rather than an inline shape.
+- `RespondentInfo` carries an index signature because `respondent_fields` is config-driven; the named members are what storage and CSV export rely on.
 
 ---
 
