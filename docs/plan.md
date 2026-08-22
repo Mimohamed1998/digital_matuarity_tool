@@ -468,7 +468,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-029** Extend the storage layer with read + stream methods
 - [x] **T-030** Admin session auth primitives (password, session token, rate limit)
 - [x] **T-031** Middleware gate + login/logout routes (FR-14, FR-17)
-- [ ] **T-032** Admin dashboard — summary stats + paginated submissions (FR-15)
+- [x] **T-032** Admin dashboard — summary stats + paginated submissions (FR-15)
 - [ ] **T-033** Submission detail view (FR-15)
 - [ ] **T-034** CSV / JSON export (FR-16)
 - [ ] **T-035** Access-control audit — prove respondents are locked out (FR-17, NFR-6)
@@ -1899,7 +1899,7 @@ curl -sS -b /tmp/dm.jar -o /dev/null -w '%{http_code}\n' localhost:3000/api/admi
 
 ### T-032 — Admin dashboard (FR-15)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-031, T-029
 
 **Do:** `src/app/admin/page.tsx` — server component, `export const dynamic = 'force-dynamic'`.
@@ -1935,6 +1935,11 @@ npm run build && npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- Verified with three seeded submissions: summary stats (total 3, mean 2.77), level distribution, per-factor means and the table all render correctly, and grepping the rendered HTML for the seeded respondent names returns 0 matches — designation only, as required. With the data removed the page reads "No submissions yet", not an error.
+- Aggregates come from `store.summary()`; the page never fetches all rows.
+- Two gates: the middleware matcher, plus `hasAdminSession()` called in the page body before anything is read.
+- Added `src/components/admin/LogoutButton.tsx` — the logout POST needs a client boundary and did not belong inside ExportButtons.
+- ExportButtons are plain links rather than fetch-and-blob, so the browser streams a large download natively instead of buffering it in the tab.
 
 ---
 
