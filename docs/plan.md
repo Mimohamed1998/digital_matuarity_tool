@@ -452,7 +452,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-013** Respondent information step (FR-11)
 - [x] **T-014** Question card component
 - [x] **T-015** Survey page orchestration — one question at a time (FR-4)
-- [ ] **T-016** Review step — read back submitted answers (FR-5)
+- [x] **T-016** Review step — read back submitted answers (FR-5)
 
 ### Phase 4 — Results
 - [ ] **T-017** Results page shell + score headline + level band (FR-6, FR-12)
@@ -1435,7 +1435,7 @@ npm run build && npm run typecheck && npm run lint
 
 ### T-016 — Review step (FR-5)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-015
 
 **Do:** `src/components/survey/ReviewPanel.tsx` — the final step before results.
@@ -1459,6 +1459,10 @@ npm run build && npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- Answers are read from the store and their statement text resolved through conf.yaml, so the review shows exactly what will be scored and stored — nothing is copied at answer time.
+- Every factor row and the respondent block have an Edit control that sets `returnToReview`, so editing lands back here rather than continuing forwards through the questionnaire.
+- "See my results" is disabled until every factor is answered and names the missing factors in visible text (and in an sr-only description tied to the button); the unanswered rows are also flagged inline.
+- "Back to the last question" uses `goTo` rather than the edit path on purpose, so the last question keeps its normal Back/Review navigation.
 
 ---
 
