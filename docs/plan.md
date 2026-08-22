@@ -436,7 +436,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-003** Author `conf.yaml` — the complete survey configuration
 
 ### Phase 1 — Domain core (pure, testable, no UI)
-- [ ] **T-004** Config schema (zod) + loader
+- [x] **T-004** Config schema (zod) + loader
 - [ ] **T-005** Domain types
 - [ ] **T-006** Scoring engine + unit tests
 - [ ] **T-007** Recommendation engine + unit tests
@@ -936,7 +936,7 @@ console.log('conf.yaml OK');"
 
 ### T-004 — Config schema (zod) + loader
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-002, T-003
 
 **Do:**
@@ -982,6 +982,9 @@ npm run test:run -- tests/config.test.ts && npm run typecheck
 ```
 
 **Notes:**
+- Dropped `import 'server-only'`: the package is not a dependency here and adding one purely as a lint marker was not worth a new runtime dep. The boundary is held by convention plus the T-035 import-boundary check instead, and load.ts says so.
+- js-yaml v5 exports no default under ESM, so the loader uses `import { load as parseYaml } from 'js-yaml'`. A default import typechecks but is undefined at runtime — worth knowing for any other module that reaches for js-yaml.
+- Also exported `clearConfigCache()` as a test seam.
 
 ---
 
