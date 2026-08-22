@@ -461,7 +461,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 
 ### Phase 5 — Persistence
 - [x] **T-020** Storage adapters (Postgres + filesystem) behind one interface
-- [ ] **T-021** `POST /api/submissions` route (FR-9)
+- [x] **T-021** `POST /api/submissions` route (FR-9)
 - [ ] **T-022** Wire submission into the survey completion flow
 
 ### Phase 5b — Admin data access *(added 2026-08-22)*
@@ -1614,7 +1614,7 @@ npm run typecheck && npm run lint && npm run build
 
 ### T-021 — `POST /api/submissions` (FR-9)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-020, T-006
 
 **Do:** `src/app/api/submissions/route.ts`.
@@ -1649,6 +1649,9 @@ ls data/submissions/
 ```
 
 **Notes:**
+- Verified end to end against a running server: a valid POST writes data/submissions/<id>.json matching §6.1 exactly (the mixed worked example stored as 3.8021 / Level 4 Established); a body claiming `result.overallScore: 5` with all-1s answers was stored as 1.0 / Level 1, so the client's number is genuinely discarded; GET returns 405; a malformed body returns 400 naming the field path; an unknown factor id returns 400.
+- Note the fs adapter only engages outside production — `npm run start` sets NODE_ENV=production, where getStore() correctly refuses the ephemeral serverless filesystem and logs instead. Use `npm run dev` to see files written locally.
+- PUT/PATCH/DELETE return 405 alongside GET, with an Allow: POST header.
 
 ---
 
