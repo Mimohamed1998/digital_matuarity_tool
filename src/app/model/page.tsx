@@ -303,32 +303,7 @@ export default function ModelPage() {
         </div>
       </section>
 
-      <section aria-labelledby="limits-heading" className="flex flex-col gap-3">
-        <h2 id="limits-heading" className="text-2xl font-semibold text-ink">
-          Limitations and sources
-        </h2>
-        <ul className="flex max-w-prose list-disc flex-col gap-2 pl-5 text-ink">
-          <li>
-            The factor and tier weights come from the source study. They are recorded in{' '}
-            <code className="rounded bg-surface-2 px-1 py-0.5 text-sm">conf.yaml</code> and can be
-            revised without changing any code.
-          </li>
-          <li>
-            The score→level thresholds are equal-width bands across the {scoring.min_answer}–
-            {scoring.max_answer} range. The source document names the five levels but does not fix
-            the boundaries between them, so these are a stated assumption open to revision.
-          </li>
-          <li>
-            The instrument is self-assessed and single-respondent. It reflects one
-            person&rsquo;s view of their organisation at one moment, which is useful for
-            direction-setting and not a substitute for an audit.
-          </li>
-          <li>
-            The tiers are combined as a weighted sum, not a product. A product would not keep the
-            result on the 1–{scoring.max_answer} scale that the maturity levels are defined on.
-          </li>
-        </ul>
-      </section>
+      
     </div>
   );
 }
