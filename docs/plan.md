@@ -455,7 +455,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-016** Review step — read back submitted answers (FR-5)
 
 ### Phase 4 — Results
-- [ ] **T-017** Results page shell + score headline + level band (FR-6, FR-12)
+- [x] **T-017** Results page shell + score headline + level band (FR-6, FR-12)
 - [ ] **T-018** Tier breakdown + factor radar charts
 - [ ] **T-019** Recommendations and strengths lists (FR-7)
 
@@ -1470,7 +1470,7 @@ npm run build && npm run typecheck && npm run lint
 
 ### T-017 — Results page + score headline (FR-6, FR-12)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-016, T-007
 
 **Do:** `src/app/results/page.tsx` (server shell) + `src/components/results/ScoreHeadline.tsx`.
@@ -1496,6 +1496,9 @@ npm run build && npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- Added `src/components/results/ResultsView.tsx` (not in the plan's file list) so the page itself can stay a server component that only loads config: the score has to be computed client-side from the store, which needs a client boundary somewhere.
+- Three distinct states, in this order: not-yet-hydrated ("Working out your result…"), no complete answer set (empty state offering the survey), and the result. The hydration state exists so a refresh never flashes the empty state over answers that are about to load.
+- The level colour is a left border and the level heading's colour; the level number, name, headline and description are always text, so nothing depends on seeing the colour.
 
 ---
 
