@@ -469,7 +469,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-030** Admin session auth primitives (password, session token, rate limit)
 - [x] **T-031** Middleware gate + login/logout routes (FR-14, FR-17)
 - [x] **T-032** Admin dashboard — summary stats + paginated submissions (FR-15)
-- [ ] **T-033** Submission detail view (FR-15)
+- [x] **T-033** Submission detail view (FR-15)
 - [ ] **T-034** CSV / JSON export (FR-16)
 - [ ] **T-035** Access-control audit — prove respondents are locked out (FR-17, NFR-6)
 
@@ -1945,7 +1945,7 @@ npm run build && npm run typecheck && npm run lint
 
 ### T-033 — Submission detail view (FR-15)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-032
 
 **Do:** `src/app/admin/submissions/[id]/page.tsx` — server component, `force-dynamic`.
@@ -1976,6 +1976,10 @@ npm run build && npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- Verified live: the detail page shows the full respondent record including the name, every factor with its answer, scale label and the statement text resolved through config, tier scores with weights, and the metadata block. An unknown id returns a real 404; unauthenticated access 307s to the login page.
+- The drift warning was tested for real by editing two factor weights and bumping meta.version, then restarting: it reports "collected under 1.0.0, current is 1.1.0-drift-test, recomputing gives 2.1580 (Level 2) where the stored result was 2.2399 (Level 2)". conf.yaml was restored afterwards.
+- Worth knowing for the next task: `loadConfig()` caches per process, so editing conf.yaml under a running dev server changes nothing until it restarts. That is correct behaviour, but it makes drift look absent if you test it without a restart.
+- Drift is flagged on the score OR the level OR a recompute that throws outright (a factor removed from config), not on the version string alone — a version bump that does not move the numbers is not worth alarming the researcher about.
 
 ---
 
