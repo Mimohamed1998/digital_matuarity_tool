@@ -456,7 +456,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 
 ### Phase 4 — Results
 - [x] **T-017** Results page shell + score headline + level band (FR-6, FR-12)
-- [ ] **T-018** Tier breakdown + factor radar charts
+- [x] **T-018** Tier breakdown + factor radar charts
 - [ ] **T-019** Recommendations and strengths lists (FR-7)
 
 ### Phase 5 — Persistence
@@ -1504,7 +1504,7 @@ npm run build && npm run typecheck && npm run lint
 
 ### T-018 — Tier breakdown + factor radar
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-017
 
 **Do:** `src/components/results/TierBreakdown.tsx` and `FactorRadar.tsx`, using recharts.
@@ -1531,6 +1531,9 @@ npm run build && npm run typecheck && npm run lint
 ```
 
 **Notes:**
+- Both charts take their domain from `scoring.min_answer`/`max_answer` — fixed to the answer scale, never inferred from the data. An auto-scaled axis would make a 2.1 look like a strong result.
+- Each chart is marked aria-hidden and is followed by a real table carrying the same numbers, so nothing is chart-only. Chart colours come from the CSS level tokens, which are already defined for both themes.
+- Loaded through next/dynamic with ssr:false from ResultsView: recharts measures the DOM to size itself, so there is nothing for it to render server-side, and this keeps it off the initial payload.
 
 ---
 

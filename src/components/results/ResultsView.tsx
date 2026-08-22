@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { ButtonLink } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ScoreHeadline } from '@/components/results/ScoreHeadline';
@@ -8,6 +9,30 @@ import type { AppConfig } from '@/lib/config/schema';
 import { computeScore, isComplete } from '@/lib/scoring';
 import { useSurveyHydrated, useSurveyStore } from '@/store/survey-store';
 import type { Answers } from '@/types/domain';
+
+/**
+ * Charts are loaded browser-side only. recharts measures the DOM to size itself, so
+ * there is nothing useful for it to render during SSR, and keeping it out of the server
+ * render also keeps it out of the initial HTML payload. The numbers themselves are in
+ * the tables inside each chart component, which do render everywhere.
+ */
+const TierBreakdown = dynamic(
+  () => import('@/components/results/TierBreakdown').then((m) => m.TierBreakdown),
+  { ssr: false, loading: () => <ChartSkeleton label="Loading the tier breakdown…" /> },
+);
+
+const FactorRadar = dynamic(
+  () => import('@/components/results/FactorRadar').then((m) => m.FactorRadar),
+  { ssr: false, loading: () => <ChartSkeleton label="Loading the factor chart…" /> },
+);
+
+function ChartSkeleton({ label }: { label: string }) {
+  return (
+    <div className="rounded-lg border border-line bg-surface p-6">
+      <p className="text-sm text-muted">{label}</p>
+    </div>
+  );
+}
 
 interface ResultsViewProps {
   config: AppConfig;
@@ -65,6 +90,15 @@ export function ResultsView({ config }: ResultsViewProps) {
         maxScore={config.scoring.max_answer}
         decimals={config.scoring.decimals}
       />
+
+      <TierBreakdown
+        result={result}
+        minScore={config.scoring.min_answer}
+        maxScore={config.scoring.max_answer}
+        decimals={config.scoring.decimals}
+      />
+
+      <FactorRadar config={config} result={result} />
     </div>
   );
 }
