@@ -460,7 +460,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked (say w
 - [x] **T-019** Recommendations and strengths lists (FR-7)
 
 ### Phase 5 — Persistence
-- [ ] **T-020** Storage adapters (Postgres + filesystem) behind one interface
+- [x] **T-020** Storage adapters (Postgres + filesystem) behind one interface
 - [ ] **T-021** `POST /api/submissions` route (FR-9)
 - [ ] **T-022** Wire submission into the survey completion flow
 
@@ -1575,7 +1575,7 @@ npm run test:run && npm run build && npm run lint
 
 ### T-020 — Storage adapters (write path)
 
-**Status:** [ ] pending
+**Status:** [x] done
 **Depends on:** T-005
 
 **Do:**
@@ -1606,6 +1606,9 @@ npm run typecheck && npm run lint && npm run build
 ```
 
 **Notes:**
+- Migration idempotency was verified for real: the DDL was extracted out of scripts/migrate.ts and run twice against a local Postgres. The second run emits only 'already exists, skipping' notices, and the resulting schema matches §6.3 column for column, including the (submitted_at desc, id desc) index. The neon() driver itself speaks HTTP to Neon and cannot be pointed at a local server, so the driver path is exercised on deploy, not here.
+- `getStore()` also treats production-without-DATABASE_URL as a misconfiguration: it logs loudly and returns the no-op store rather than silently writing to an ephemeral serverless filesystem.
+- The no-op store logs the submission id only — never the body, which is personal data.
 
 ---
 
